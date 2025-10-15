@@ -13,7 +13,8 @@ export default {
       serve({
       open: true,             
       contentBase: "dist",  
-      port: 3000,      
+      port: 3000, 
+      traceRequests: true,     
       proxy: {
         '/api': 'http://localhost:3001'
       }
