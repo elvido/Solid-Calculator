@@ -1,0 +1,9 @@
+{
+  "watch": ["mock-server/index.js", "mock-server/routes"],
+  "ext": "js,json,ts",
+  "exec": "node mock-server/index.js",
+  "env": {
+    "NODE_ENV": "development",
+    "MOCK_MODE": "true"
+  }
+}

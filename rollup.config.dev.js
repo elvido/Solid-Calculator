@@ -1,5 +1,5 @@
 import baseConfig from "./rollup.config.base.js";
-import serve from "rollup-plugin-serve";
+import serve from './plugins/rollup-express-serve.js';
 import livereload from "rollup-plugin-livereload";
 
 export default {
@@ -13,7 +13,10 @@ export default {
       serve({
       open: true,             
       contentBase: "dist",  
-      port: 3000               
+      port: 3000,      
+      proxy: {
+        '/api': 'http://localhost:3001'
+      }
     }),
     livereload({
       watch: "dist",
