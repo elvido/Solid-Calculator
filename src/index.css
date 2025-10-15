@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@layer components {
+  /* Optional: custom tweaks */
+}
