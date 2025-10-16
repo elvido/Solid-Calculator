@@ -16,7 +16,8 @@ export default {
       port: 3000, 
       traceRequests: true,     
       proxy: {
-        '/api': 'http://localhost:3001'
+        '/api': 'http://localhost:3001',
+        '/health': { target: 'http://localhost:3001/api/status', stripPrefix: true }
       }
     }),
     livereload({

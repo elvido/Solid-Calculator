@@ -1,10 +1,11 @@
-import tailwindcssPostcss from '@tailwindcss/postcss';
+import tailwindcss from '@tailwindcss/postcss'
 import autoprefixer from 'autoprefixer';
+import postcssMinify from 'postcss-minify'; // or postcssCsso, postcssClean
 
-/** @type {import('postcss-load-config').Config} */
 export default {
   plugins: [
-    tailwindcssPostcss(),
-    autoprefixer()
+    tailwindcss,
+    autoprefixer,
+    postcssMinify()
   ]
 };
