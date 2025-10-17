@@ -195,6 +195,18 @@ function expressServe(options = {}) {
     : () => {};
   server.listen(port, host, () => onListening(server));
 
+  function closeServerOnTermination() {
+    const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP']
+    terminationSignals.forEach(signal => {
+      process.on(signal, () => {
+        if (server) {
+          server.close()
+          process.exit()
+        }
+      })
+    })
+  }
+
   let noBundle = 0;
 
   return {
@@ -222,18 +234,6 @@ function expressServe(options = {}) {
       } 
     }    
   }
-}
-
-function closeServerOnTermination() {
-  const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP']
-  terminationSignals.forEach(signal => {
-    process.on(signal, () => {
-      if (server) {
-        server.close()
-        process.exit()
-      }
-    })
-  })
 }
 
 export default expressServe

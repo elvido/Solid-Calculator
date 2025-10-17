@@ -19,10 +19,5 @@ export function exampleMocking() {
         }
     });
 
-    router.use((req, res, next) => {
-        console.warn(`[mock] Missed route: ${req.method} ${req.originalUrl}`);
-        next();
-    });
-
     return router;
 }

@@ -1,5 +1,5 @@
 import baseConfig from "./rollup.config.base.js";
-import serve from './plugins/rollup-express-serve.js';
+import serve from './plugins/rollup-plugin-express-serve.js';
 import livereload from "rollup-plugin-livereload";
 import { exampleMocking } from './plugins/example-mocking-plugin.js';
 
@@ -15,7 +15,8 @@ export default {
       open: true,             
       contentBase: "dist",  
       port: 3000, 
-      traceRequests: true,     
+      verbose: true,
+      traceRequests: false,     
       proxy: {
         '/api': 'http://localhost:3001',
         '/health': { target: 'http://localhost:3001/api/status', stripPrefix: true }
