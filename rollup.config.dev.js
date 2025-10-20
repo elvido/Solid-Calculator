@@ -16,7 +16,7 @@ export default {
       contentBase: 'dist',
       port: 3000,
       verbose: true,
-      traceRequests: false,
+      traceRequests: true,
       proxy: {
         '/api': 'http://localhost:3001',
         '/health': { target: 'http://localhost:3001/api/status', stripPrefix: true },
