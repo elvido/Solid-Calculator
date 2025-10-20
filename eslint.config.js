@@ -1,0 +1,57 @@
+import js from '@eslint/js';
+import tsPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import solid from 'eslint-plugin-solid';
+
+export default [
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'assets/**',
+      '.yarn/**',
+      '*.config.js',
+      '*.config.*.js'
+    ],
+  },
+  js.configs.recommended,
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './tsconfig.json',
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true
+        }
+      },
+      globals: {
+        document: 'readonly',
+        window: 'readonly',
+        console: 'readonly',
+        process: 'readonly',
+        self: 'readonly'
+      }
+    },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      solid
+    },
+    rules: {
+      ...solid.configs.typescript.rules
+    }
+  },
+  {
+    files: ['plugins/**/*.js', 'mock-server/**/*.js', '*.config.*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        console: 'readonly',
+        process: 'readonly'
+      }
+    }
+  }
+];

@@ -120,7 +120,6 @@ function expressServe(options = {}) {
       const router = express.Router();
 
       router.use((req, res, next) => {
-        const requestPath = req.url;
         const originalPath = req.originalUrl;
         const rewrittenPath = stripPrefix
           ? originalPath.replace(new RegExp(`^${route}`), '') || '/'

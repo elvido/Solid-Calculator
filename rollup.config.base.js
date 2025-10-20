@@ -4,6 +4,7 @@ import postcss from "rollup-plugin-postcss";
 import copy from "rollup-plugin-copy";
 import html from "@rollup/plugin-html";
 import typescript from "@rollup/plugin-typescript";
+import eslint from '@rollup/plugin-eslint'
 
 const baseHtml = (title, styles, scripts) => 
 `<!DOCTYPE html>
@@ -36,6 +37,11 @@ export default {
       extensions: [".js", ".jsx", ".ts", ".tsx"]
     }),
     typescript(),
+    eslint({
+      include: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
+      throwOnError: true,
+      throwOnWarning: false
+    }),
     babel({
       presets: ["babel-preset-solid"],
       babelHelpers: "bundled",
