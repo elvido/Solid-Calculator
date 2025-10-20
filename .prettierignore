@@ -1,0 +1,16 @@
+# Skip build artifacts
+.yarn/
+.vscode/
+*.code-workspace
+
+# Skip dependencies
+node_modules/
+assets/
+
+# Skip versioned outputs
+dist/
+.*
+
+# Skip Markdown and docs
+*.md
+docs/

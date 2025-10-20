@@ -10,5 +10,7 @@
     "typescriptreact"
 ],
 "editor.autoIndentOnPaste": true,
-"editor.bracketPairColorization.independentColorPoolPerBracketType": true
+"editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+"editor.defaultFormatter": "esbenp.prettier-vscode",
+"editor.formatOnSave": true
 }

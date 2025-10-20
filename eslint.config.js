@@ -1,7 +1,9 @@
-import js from '@eslint/js';
-import tsPlugin from '@typescript-eslint/eslint-plugin';
-import tsParser from '@typescript-eslint/parser';
-import solid from 'eslint-plugin-solid';
+import js from '@eslint/js'
+import tsPlugin from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import solid from 'eslint-plugin-solid'
+import eslintPluginPrettier from 'eslint-plugin-prettier'
+import eslintConfigPrettier from 'eslint-config-prettier'
 
 export default [
   {
@@ -12,7 +14,7 @@ export default [
       '.yarn/**',
       '*.config.js',
       '*.config.*.js'
-    ],
+    ]
   },
   js.configs.recommended,
   {
@@ -23,9 +25,7 @@ export default [
         project: './tsconfig.json',
         ecmaVersion: 'latest',
         sourceType: 'module',
-        ecmaFeatures: {
-          jsx: true
-        }
+        ecmaFeatures: { jsx: true }
       },
       globals: {
         document: 'readonly',
@@ -37,10 +37,12 @@ export default [
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      solid
+      solid,
+      prettier: eslintPluginPrettier
     },
     rules: {
-      ...solid.configs.typescript.rules
+      ...solid.configs.typescript.rules,
+      'prettier/prettier': 'error'
     }
   },
   {
@@ -53,5 +55,6 @@ export default [
         process: 'readonly'
       }
     }
-  }
-];
+  },
+  eslintConfigPrettier // ✅ fixed: no spread operator
+]

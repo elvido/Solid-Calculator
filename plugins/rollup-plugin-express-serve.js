@@ -8,7 +8,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import open from 'open';
 import morgan from 'morgan';
 
-let server
+let server;
 
 /**
  * @param {{
@@ -76,7 +76,7 @@ function expressServe(options = {}) {
           : null;
 
       if (filters) {
-        skip = (req) => !filters.some(prefix => req.originalUrl.startsWith(prefix));
+        skip = (req) => !filters.some((prefix) => req.originalUrl.startsWith(prefix));
       }
     } else {
       format = defaultFormat;
@@ -97,18 +97,20 @@ function expressServe(options = {}) {
 
   // Apply custom middleware
   if (Array.isArray(options.middleware)) {
-    options.middleware.forEach(fn => app.use(fn));
+    options.middleware.forEach((fn) => app.use(fn));
   }
 
   // Serve static files
-  contentBase.forEach(base => {
-    app.use(express.static(path.resolve(base), {
-      setHeaders: (res, filePath) => {
-        const mimetype = resolveMime(filePath);
-        res.setHeader('Content-Type', mimetype);
-        res.setHeader('x-trace-source', 'static');
-      }
-    }));
+  contentBase.forEach((base) => {
+    app.use(
+      express.static(path.resolve(base), {
+        setHeaders: (res, filePath) => {
+          const mimetype = resolveMime(filePath);
+          res.setHeader('Content-Type', mimetype);
+          res.setHeader('x-trace-source', 'static');
+        },
+      })
+    );
   });
 
   // Proxy routes with optional prefix stripping
@@ -134,11 +136,13 @@ function expressServe(options = {}) {
         next();
       });
 
-      router.use(createProxyMiddleware({
-        target,
-        changeOrigin: true
-        // no pathRewrite needed — we already rewrote req.url
-      }));
+      router.use(
+        createProxyMiddleware({
+          target,
+          changeOrigin: true,
+          // no pathRewrite needed — we already rewrote req.url
+        })
+      );
 
       app.use(route, router);
     });
@@ -163,58 +167,63 @@ function expressServe(options = {}) {
 
   // release previous server instance if rollup is reloading configuration in watch mode
   if (server) {
-    server.close()
+    server.close();
   } else {
-    closeServerOnTermination()
+    closeServerOnTermination();
   }
 
   // Create server
   server = options.https
-    ? createHttpsServer({
-      key: fs.readFileSync(options.https.key),
-      cert: fs.readFileSync(options.https.cert)
-    }, app)
+    ? createHttpsServer(
+        {
+          key: fs.readFileSync(options.https.key),
+          cert: fs.readFileSync(options.https.cert),
+        },
+        app
+      )
     : createHttpServer(app);
 
   // Handle common server errors
-  server.on('error', e => {
+  server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      console.error('Endpoint is in use, either stop the other server or use a different port.')
-      process.exit()
+      console.error(
+        'Endpoint is in use, either stop the other server or use a different port.'
+      );
+      process.exit();
     } else {
-      throw e
+      throw e;
     }
   });
 
   const protocol = options.https ? 'https' : 'http';
   const url = `${protocol}://${host}:${port}`;
 
-  const onListening = typeof options.onListening === 'function'
-    ? options.onListening
-    : () => {};
+  const onListening =
+    typeof options.onListening === 'function' ? options.onListening : () => {};
   server.listen(port, host, () => onListening(server));
 
   function closeServerOnTermination() {
-    const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP']
-    terminationSignals.forEach(signal => {
+    const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
+    terminationSignals.forEach((signal) => {
       process.on(signal, () => {
         if (server) {
-          server.close()
-          process.exit()
+          server.close();
+          process.exit();
         }
-      })
-    })
+      });
+    });
   }
 
-  let noBundle = 0;
+  let bundleCount = 0;
 
   return {
     name: 'rollup-express-serve',
     generateBundle() {
-      if (noBundle === 0) { // execute only once on startup
-        noBundle++
+      if (bundleCount === 0) {
+        // execute only once on startup
+        bundleCount++;
         if (options.verbose !== false) {
-          contentBase.forEach(base => {
+          contentBase.forEach((base) => {
             console.log(`\x1b[32m${url}\x1b[0m -> ${path.resolve(base)}`);
           });
         }
@@ -230,9 +239,11 @@ function expressServe(options = {}) {
           }
           open(opening);
         }
-      } 
-    }    
-  }
+      } else {
+        bundleCount++;
+      }
+    },
+  };
 }
 
-export default expressServe
+export default expressServe;

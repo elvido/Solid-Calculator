@@ -1,17 +1,17 @@
-import { createSignal } from "solid-js";
+import { createSignal } from 'solid-js';
 import './index.css';
 
 function App() {
-  const [display, setDisplay] = createSignal<string>("0");
+  const [display, setDisplay] = createSignal<string>('0');
   const [operator, setOperator] = createSignal<string | null>(null);
   const [firstValue, setFirstValue] = createSignal<string | null>(null);
   const [waitingForOperand, setWaitingForOperand] = createSignal<boolean>(false);
-  const [theme, setTheme] = createSignal("light");
+  const [theme, setTheme] = createSignal('light');
 
   const toggleTheme = () => {
-    const next = theme() === "light" ? "dark" : "light";
+    const next = theme() === 'light' ? 'dark' : 'light';
     setTheme(next);
-    document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.setAttribute('data-theme', next);
   };
 
   const inputDigit = (digit: string) => {
@@ -19,18 +19,18 @@ function App() {
       setDisplay(digit);
       setWaitingForOperand(false);
     } else {
-      setDisplay(display() === "0" ? digit : display() + digit);
+      setDisplay(display() === '0' ? digit : display() + digit);
     }
   };
 
   const inputDot = () => {
-    if (!display().includes(".")) {
-      setDisplay(display() + ".");
+    if (!display().includes('.')) {
+      setDisplay(display() + '.');
     }
   };
 
   const clear = () => {
-    setDisplay("0");
+    setDisplay('0');
     setOperator(null);
     setFirstValue(null);
     setWaitingForOperand(false);
@@ -51,11 +51,16 @@ function App() {
 
   const calculate = (first: number, second: number, op: string): number => {
     switch (op) {
-      case "+": return first + second;
-      case "-": return first - second;
-      case "*": return first * second;
-      case "/": return second !== 0 ? first / second : NaN;
-      default: return second;
+      case '+':
+        return first + second;
+      case '-':
+        return first - second;
+      case '*':
+        return first * second;
+      case '/':
+        return second !== 0 ? first / second : NaN;
+      default:
+        return second;
     }
   };
 
@@ -74,10 +79,10 @@ function App() {
       {/* Theme toggle */}
       <div class="flex justify-end mb-4">
         <button class="btn btn-sm btn-outline" onClick={toggleTheme}>
-          {theme() === "light" ? "🌙 Dark" : "☀️ Light"}
+          {theme() === 'light' ? '🌙 Dark' : '☀️ Light'}
         </button>
       </div>
-  
+
       <h1 class="text-2xl font-bold mb-4">Solid Calculator</h1>
 
       {/* Display */}
@@ -87,33 +92,69 @@ function App() {
 
       {/* C button row */}
       <div class="grid grid-cols-4 gap-2 mb-2">
-        <button class="btn btn-error col-span-4 hover:scale-105 active:scale-95 transition-transform" onClick={() => clear()}>C</button>
+        <button
+          class="btn btn-error col-span-4 hover:scale-105 active:scale-95 transition-transform"
+          onClick={() => clear()}
+        >
+          C
+        </button>
       </div>
 
       {/* Main pad */}
       <div class="grid grid-cols-4 gap-2 mb-2">
         {/* Digits and operations */}
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("7")}>7</button>
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("8")}>8</button>
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("9")}>9</button>
-        <button class="btn btn-accent aspect-square" onClick={() => performOperation("/")}>÷</button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('7')}>
+          7
+        </button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('8')}>
+          8
+        </button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('9')}>
+          9
+        </button>
+        <button class="btn btn-accent aspect-square" onClick={() => performOperation('/')}>
+          ÷
+        </button>
 
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("4")}>4</button>
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("5")}>5</button>
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("6")}>6</button>
-        <button class="btn btn-accent aspect-square" onClick={() => performOperation("*")}>×</button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('4')}>
+          4
+        </button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('5')}>
+          5
+        </button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('6')}>
+          6
+        </button>
+        <button class="btn btn-accent aspect-square" onClick={() => performOperation('*')}>
+          ×
+        </button>
 
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("1")}>1</button>
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("2")}>2</button>
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("3")}>3</button>
-        <button class="btn btn-accent aspect-square" onClick={() => performOperation("-")}>−</button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('1')}>
+          1
+        </button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('2')}>
+          2
+        </button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('3')}>
+          3
+        </button>
+        <button class="btn btn-accent aspect-square" onClick={() => performOperation('-')}>
+          −
+        </button>
 
-        <button class="btn btn-neutral aspect-square" onClick={inputDot}>.</button>
-        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit("0")}>0</button>
-        <button class="btn btn-success aspect-square" onClick={handleEquals}>=</button>
-        <button class="btn btn-accent aspect-square" onClick={() => performOperation("+")}>+</button>
+        <button class="btn btn-neutral aspect-square" onClick={inputDot}>
+          .
+        </button>
+        <button class="btn btn-neutral aspect-square" onClick={() => inputDigit('0')}>
+          0
+        </button>
+        <button class="btn btn-success aspect-square" onClick={handleEquals}>
+          =
+        </button>
+        <button class="btn btn-accent aspect-square" onClick={() => performOperation('+')}>
+          +
+        </button>
       </div>
-
     </div>
   );
 }

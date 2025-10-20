@@ -1,13 +1,13 @@
-import babel from "@rollup/plugin-babel";
-import resolve from "@rollup/plugin-node-resolve";
-import postcss from "rollup-plugin-postcss";
-import copy from "rollup-plugin-copy";
-import html from "@rollup/plugin-html";
-import typescript from "@rollup/plugin-typescript";
-import eslint from '@rollup/plugin-eslint'
+import babel from '@rollup/plugin-babel';
+import resolve from '@rollup/plugin-node-resolve';
+import postcss from 'rollup-plugin-postcss';
+import copy from 'rollup-plugin-copy';
+import html from '@rollup/plugin-html';
+import typescript from '@rollup/plugin-typescript';
+import eslint from '@rollup/plugin-eslint';
 
-const baseHtml = (title, styles, scripts) => 
-`<!DOCTYPE html>
+const baseHtml = (title, styles, scripts) =>
+  `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -25,55 +25,55 @@ const baseHtml = (title, styles, scripts) =>
 `;
 
 export default {
-  input: "src/index.tsx",
+  input: 'src/index.tsx',
   output: {
-    dir: "dist",
-    format: "es",
-    entryFileNames: "app.js",
-    assetFileNames: "[name][extname]"
+    dir: 'dist',
+    format: 'es',
+    entryFileNames: 'app.js',
+    assetFileNames: '[name][extname]',
   },
   plugins: [
     resolve({
-      extensions: [".js", ".jsx", ".ts", ".tsx"]
+      extensions: ['.js', '.jsx', '.ts', '.tsx'],
     }),
     typescript(),
     eslint({
-      include: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
+      include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
       throwOnError: true,
-      throwOnWarning: false
+      throwOnWarning: false,
     }),
     babel({
-      presets: ["babel-preset-solid"],
-      babelHelpers: "bundled",
-      extensions: [".js", ".jsx", ".ts", ".tsx"]
+      presets: ['babel-preset-solid'],
+      babelHelpers: 'bundled',
+      extensions: ['.js', '.jsx', '.ts', '.tsx'],
     }),
     postcss({
-      extract: "app.css",
-      minimize: true
+      extract: 'app.css',
+      minimize: true,
     }),
     copy({
-      targets: [
-        { src: "assets/*.*", dest: "dist" }
-      ],
+      targets: [{ src: 'assets/*.*', dest: 'dist' }],
       copyOnce: true,
-      verbose: true
+      verbose: true,
     }),
     html({
-      title: "Solid Calculator",
+      title: 'Solid Calculator',
       template: ({ attributes, files, meta, publicPath, title }) => {
         const scripts = (files.js || [])
-          .map(({ fileName }) => `<script type="module" src="${publicPath}${fileName}"></script>`)
-          .join("\n");
+          .map(
+            ({ fileName }) => `<script type="module" src="${publicPath}${fileName}"></script>`
+          )
+          .join('\n');
         const styles = (files.css || [])
           .map(({ fileName }) => `<link rel="stylesheet" href="${publicPath}${fileName}">`)
-          .join("\n");
+          .join('\n');
         return baseHtml(title, styles, scripts);
-      }
-    })
+      },
+    }),
   ],
   external: [],
   watch: {
-    include: ["src/**", "assets/**"],
-    exclude: ["dist/**", "node_modules/**"]
-  }
+    include: ['src/**', 'assets/**'],
+    exclude: ['dist/**', 'node_modules/**'],
+  },
 };
