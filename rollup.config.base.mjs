@@ -1,3 +1,4 @@
+// rollup.config.base.mjs
 import babel from '@rollup/plugin-babel';
 import resolve from '@rollup/plugin-node-resolve';
 import postcss from 'rollup-plugin-postcss';
@@ -5,6 +6,7 @@ import copy from 'rollup-plugin-copy';
 import html from '@rollup/plugin-html';
 import typescript from '@rollup/plugin-typescript';
 import eslint from '@rollup/plugin-eslint';
+import postcssConfig from './postcss.config.mjs';
 
 const baseHtml = (title, styles, scripts) =>
   `<!DOCTYPE html>
@@ -46,8 +48,10 @@ export default {
       presets: ['babel-preset-solid'],
       babelHelpers: 'bundled',
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      sourceMaps: true,
     }),
     postcss({
+      ...postcssConfig,
       extract: 'app.css',
       minimize: true,
     }),
@@ -60,9 +64,7 @@ export default {
       title: 'Solid Calculator',
       template: ({ attributes, files, meta, publicPath, title }) => {
         const scripts = (files.js || [])
-          .map(
-            ({ fileName }) => `<script type="module" src="${publicPath}${fileName}"></script>`
-          )
+          .map(({ fileName }) => `<script type="module" src="${publicPath}${fileName}"></script>`)
           .join('\n');
         const styles = (files.css || [])
           .map(({ fileName }) => `<link rel="stylesheet" href="${publicPath}${fileName}">`)

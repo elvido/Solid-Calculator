@@ -13,6 +13,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "lib": ["DOM", "ESNext"],
     "types": [] // ⬅️ prevents implicit type inclusions like 'minimatch'
   },
   "include": ["src"],

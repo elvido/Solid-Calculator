@@ -1,3 +1,4 @@
+// Core dependencies
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -7,38 +8,27 @@ import { createServer as createHttpsServer } from 'https';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import open from 'open';
 import morgan from 'morgan';
+import './types.mjs'; // For JSDoc
 
-let server;
+let server; // Holds the active server instance for reuse or shutdown
 
 /**
- * @param {{
- *   contentBase?: string | string[], // Static file directories to serve
- *   port?: number,                   // Port to listen on (default: 10001)
- *   host?: string,                   // Hostname to bind (default: 'localhost')
- *   open?: boolean,                  // Open browser after server starts
- *   openPage?: string,               // Page to open (relative or full URL)
- *   proxy?: Record<string, string | { target: string, stripPrefix?: boolean }>, // Proxy route mappings
- *   historyApiFallback?: boolean | string, // SPA fallback (true or custom file path)
- *   headers?: Record<string, string>,      // Custom response headers
- *   verbose?: boolean,                     // Log server and proxy activity
- *   onListening?: (server: import('http').Server | import('https').Server) => void, // Callback when server starts
- *   https?: { key: string, cert: string }, // HTTPS key and cert file paths
- *   middleware?: Array<import('express').RequestHandler>, // Additional Express middleware
- *   traceRequests?: string | { format?: string | ((tokens, req, res) => string), filter?: string | string[] }, // Morgan logging config
- *   mimeTypes?: Record<string, string | string[]> // Custom MIME type overrides
- * }} options
- * @returns {import('rollup').Plugin} Rollup plugin instance
+ * Creates and configures an Express server based on the provided options.
+ * This function is used by both the Rollup plugin and standalone wrappers.
+ *
+ * @param {ExpressServeOptions} options - Configuration options
+ * @returns {import('http').Server | import('https').Server} - The created server instance
  */
-function expressServe(options = {}) {
+function createServer(options = {}) {
   const app = express();
   const port = options.port || 10001;
   const host = options.host || 'localhost';
-  const contentBase = Array.isArray(options.contentBase)
-    ? options.contentBase
-    : [options.contentBase || ''];
-
+  const contentBase = Array.isArray(options.contentBase) ? options.contentBase : [options.contentBase || ''];
   const customMimeTypes = options.mimeTypes || {};
 
+  /**
+   * Resolves MIME type for a given file path, using custom overrides if provided.
+   */
   function resolveMime(filePath) {
     const ext = path.extname(filePath).toLowerCase();
     const custom = customMimeTypes[ext];
@@ -49,7 +39,7 @@ function expressServe(options = {}) {
         : defaultLookup(filePath) || 'application/octet-stream';
   }
 
-  // Morgan trace logging
+  // Enable request logging via Morgan if configured
   if (options.traceRequests) {
     let format;
     let skip;
@@ -68,7 +58,6 @@ function expressServe(options = {}) {
       format = options.traceRequests;
     } else if (typeof options.traceRequests === 'object') {
       format = options.traceRequests.format || defaultFormat;
-
       const filters = Array.isArray(options.traceRequests.filter)
         ? options.traceRequests.filter
         : typeof options.traceRequests.filter === 'string'
@@ -85,7 +74,7 @@ function expressServe(options = {}) {
     app.use(morgan(format, { skip }));
   }
 
-  // Apply headers
+  // Apply custom response headers
   if (options.headers) {
     app.use((req, res, next) => {
       Object.entries(options.headers).forEach(([key, value]) => {
@@ -95,12 +84,12 @@ function expressServe(options = {}) {
     });
   }
 
-  // Apply custom middleware
+  // Apply additional Express middleware
   if (Array.isArray(options.middleware)) {
     options.middleware.forEach((fn) => app.use(fn));
   }
 
-  // Serve static files
+  // Serve static files from configured directories
   contentBase.forEach((base) => {
     app.use(
       express.static(path.resolve(base), {
@@ -113,7 +102,7 @@ function expressServe(options = {}) {
     );
   });
 
-  // Proxy routes with optional prefix stripping
+  // Setup proxy routes
   if (options.proxy) {
     Object.entries(options.proxy).forEach(([route, config]) => {
       const target = typeof config === 'string' ? config : config.target;
@@ -123,11 +112,8 @@ function expressServe(options = {}) {
 
       router.use((req, res, next) => {
         const originalPath = req.originalUrl;
-        const rewrittenPath = stripPrefix
-          ? originalPath.replace(new RegExp(`^${route}`), '') || '/'
-          : originalPath;
-
-        req.url = rewrittenPath; // override Express-trimmed path
+        const rewrittenPath = stripPrefix ? originalPath.replace(new RegExp(`^${route}`), '') || '/' : originalPath;
+        req.url = rewrittenPath;
 
         const fullTargetUrl = target.replace(/\/$/, '') + '/' + req.url.replace(/^\//, '');
         res.setHeader('x-trace-source', 'proxy');
@@ -140,7 +126,6 @@ function expressServe(options = {}) {
         createProxyMiddleware({
           target,
           changeOrigin: true,
-          // no pathRewrite needed — we already rewrote req.url
         })
       );
 
@@ -148,12 +133,9 @@ function expressServe(options = {}) {
     });
   }
 
-  // SPA fallback
+  // SPA fallback for client-side routing
   if (options.historyApiFallback) {
-    const fallbackPath =
-      typeof options.historyApiFallback === 'string'
-        ? options.historyApiFallback
-        : '/index.html';
+    const fallbackPath = typeof options.historyApiFallback === 'string' ? options.historyApiFallback : '/index.html';
 
     app.use((req, res, next) => {
       if (req.method === 'GET') {
@@ -165,14 +147,14 @@ function expressServe(options = {}) {
     });
   }
 
-  // release previous server instance if rollup is reloading configuration in watch mode
+  // Gracefully close previous server if Rollup restarts
   if (server) {
     server.close();
   } else {
     closeServerOnTermination();
   }
 
-  // Create server
+  // Create HTTP or HTTPS server
   server = options.https
     ? createHttpsServer(
         {
@@ -186,22 +168,19 @@ function expressServe(options = {}) {
   // Handle common server errors
   server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      console.error(
-        'Endpoint is in use, either stop the other server or use a different port.'
-      );
+      console.error('Endpoint is in use, either stop the other server or use a different port.');
       process.exit();
     } else {
       throw e;
     }
   });
 
-  const protocol = options.https ? 'https' : 'http';
-  const url = `${protocol}://${host}:${port}`;
-
-  const onListening =
-    typeof options.onListening === 'function' ? options.onListening : () => {};
+  const onListening = typeof options.onListening === 'function' ? options.onListening : () => {};
   server.listen(port, host, () => onListening(server));
 
+  /**
+   * Ensures the server shuts down cleanly on termination signals.
+   */
   function closeServerOnTermination() {
     const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
     terminationSignals.forEach((signal) => {
@@ -214,30 +193,66 @@ function expressServe(options = {}) {
     });
   }
 
+  return server;
+}
+
+/**
+ * Creates a serving utility object with methods to start the server,
+ * print resolved paths, and open the browser.
+ *
+ * @param {ExpressServeOptions} options - Configuration options
+ * @returns {{ startServer: Function, printResolvePaths: Function, openPage: Function }}
+ */
+export function createServing(options = {}) {
+  return {
+    startServer: () => createServer(options),
+
+    printResolvePaths: () => {
+      const protocol = options.https ? 'https' : 'http';
+      const url = `${protocol}://${options.host || 'localhost'}:${options.port || 10001}`;
+      const bases = Array.isArray(options.contentBase) ? options.contentBase : [options.contentBase || ''];
+      bases.forEach((base) => {
+        console.log(`\x1b[32m${url}\x1b[0m -> ${path.resolve(base)}`);
+      });
+    },
+
+    openPage: () => {
+      const protocol = options.https ? 'https' : 'http';
+      const url = `${protocol}://${options.host || 'localhost'}:${options.port || 10001}`;
+      let opening;
+      if (typeof options.openPage === 'string' && /^https?:\/\//.test(options.openPage)) {
+        opening = options.openPage;
+      } else {
+        const page = options.openPage || '/';
+        opening = url + (page.startsWith('/') ? page : '/' + page);
+      }
+      open(opening);
+    },
+  };
+}
+
+/**
+ * Rollup plugin entry point. Starts the server and hooks into Rollup's lifecycle.
+ *
+ * @param {ExpressServeOptions} options - Configuration options
+ * @returns {import('rollup').Plugin} - Rollup plugin object
+ */
+function expressServe(options = {}) {
+  const serving = createServing(options);
+  serving.startServer();
+
   let bundleCount = 0;
 
   return {
     name: 'rollup-express-serve',
     generateBundle() {
       if (bundleCount === 0) {
-        // execute only once on startup
         bundleCount++;
         if (options.verbose !== false) {
-          contentBase.forEach((base) => {
-            console.log(`\x1b[32m${url}\x1b[0m -> ${path.resolve(base)}`);
-          });
+          serving.printResolvePaths();
         }
         if (options.open) {
-          let opening;
-          if (typeof options.openPage === 'string' && /^https?:\/\/.+/.test(options.openPage)) {
-            // Full external URL provided
-            opening = options.openPage;
-          } else {
-            // Relative path or undefined → default to root
-            const page = options.openPage || '/';
-            opening = url + (page.startsWith('/') ? page : '/' + page);
-          }
-          open(opening);
+          serving.openPage();
         }
       } else {
         bundleCount++;

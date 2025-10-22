@@ -1,4 +1,5 @@
-import baseConfig from './rollup.config.base.js';
+// rollup.config.prd.mjs
+import baseConfig from './rollup.config.base.mjs';
 import del from 'rollup-plugin-delete';
 import terser from '@rollup/plugin-terser';
 

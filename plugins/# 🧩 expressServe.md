@@ -1,61 +1,35 @@
-# 📦 rollup-plugin-express-serve
+# 🧩 expressServe.mjs
 
-Serve static files, proxy APIs, and enable SPA fallback during development — all powered by Express. This plugin is ideal for local dashboards, Smart Home UIs, and reproducible group setups.
+CLI entry point for `rollup-plugin-express-serve`, enabling standalone server startup with dynamic config resolution. It allows the reuse of your rollup-plugin-express-serve configuration serving you content as standalone server without rollup.
 
-## 🚀 Installation
-
-```bash
-yarn add -d rollup-plugin-express-serve
-```
-
-or
+## 🚀 Usage
 
 ```bash
-npm install --save-dev rollup-plugin-express-serve
+node expressServe.mjs --config ./my-config.mjs
 ```
 
-## 🛠️ Usage
+If no `--config` is provided, it falls back to:
+
+- `express-serve.config.mjs`
+- `express-serve.config.js`
+- `express-serve.config.cjs`
+
+## 🛠️ CLI Options
+
+| Flag       | Alias | Type     | Description                                            |
+| ---------- | ----- | -------- | ------------------------------------------------------ |
+| `--config` | `-c`  | `string` | Path to the config file. Must export a default object. |
+
+## 🔍 Config Resolution Logic
 
 ```js
-// rollup.config.js
-import expressServe from 'rollup-plugin-express-serve';
-
-export default {
-  input: 'src/index.js',
-  output: {
-    file: 'dist/bundle.js',
-    format: 'esm'
-  },
-  plugins: [
-    expressServe({
-      contentBase: 'public',
-      port: 3000,
-      open: true,
-      openPage: '/dashboard',
-      proxy: {
-        '/api': {
-          target: 'http://localhost:5000',
-          stripPrefix: true
-        }
-      },
-      historyApiFallback: true,
-      headers: {
-        'Cache-Control': 'no-store'
-      },
-      mimeTypes: {
-        'application/wasm': ['wasm'],
-        'text/markdown': ['md']
-      },
-      traceRequests: {
-        format: 'dev',
-        filter: ['/api', '/assets']
-      }
-    })
-  ]
-};
+// Priority 1: explicit --config path
+// Priority 2: fallback to express-serve.config.{mjs,js,cjs}
 ```
 
-## ⚙️ Plugin Options
+If the file is missing or invalid, the script exits with an error.
+
+## ⚙️ Config Options (same as for rollup-plugin-express-serve)
 
 | Option               | Type                                                                                             | Default       | Description                                                                                  |
 | -------------------- | ------------------------------------------------------------------------------------------------ | ------------- | -------------------------------------------------------------------------------------------- |
@@ -74,39 +48,45 @@ export default {
 | `traceRequests`      | `string` or `{ format?: string \| ((tokens, req, res) => string), filter?: string \| string[] }` | `undefined`   | Morgan logging format or configuration. Supports custom format and route filtering           |
 | `verbose`            | `boolean`                                                                                        | `true`        | Whether to log server and proxy activity                                                     |
 
+## 📦 Example Config File
+
+```js
+// express-serve.config.mjs
+export default {
+  contentBase: 'public',
+  port: 3000,
+  open: true,
+  openPage: '/dashboard',
+  proxy: {
+    '/api': {
+      target: 'http://localhost:5000',
+      stripPrefix: true
+    }
+  },
+  historyApiFallback: true,
+  verbose: true
+};
+```
+
 ## 🧪 Examples
 
-### Proxy with prefix stripping
+### Start with custom config
 
-```js
-proxy: {
-  '/api': {
-    target: 'http://localhost:5000',
-    stripPrefix: true
-  }
-}
+```bash
+node expressServe.mjs --config ./dashboard.mjs
 ```
 
-### SPA fallback to custom file
+### Use fallback config
 
-```js
-historyApiFallback: '/fallback.html'
+```bash
+node expressServe.mjs
+# Will try express-serve.config.mjs/js/cjs
 ```
 
-### Custom MIME types
+### Silent mode
 
 ```js
-mimeTypes: {
-  'application/wasm': ['wasm'],
-  'text/markdown': ['md']
-}
-```
-
-### Trace logging with filter
-
-```js
-traceRequests: {
-  format: 'dev',
-  filter: ['/api', '/assets']
+export default {
+  verbose: false
 }
 ```

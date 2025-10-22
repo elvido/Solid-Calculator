@@ -7,14 +7,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default [
   {
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-      'assets/**',
-      '.yarn/**',
-      '*.config.js',
-      '*.config.*.js',
-    ],
+    ignores: ['dist/**', 'node_modules/**', 'assets/**', '.yarn/**', '*.config.js', '*.config.*.js'],
   },
   js.configs.recommended,
   {
@@ -33,6 +26,7 @@ export default [
         console: 'readonly',
         process: 'readonly',
         self: 'readonly',
+        fetch: 'readonly',
       },
     },
     plugins: {
@@ -46,7 +40,7 @@ export default [
     },
   },
   {
-    files: ['plugins/**/*.js', 'mock-server/**/*.js', '*.config.*.js'],
+    files: ['plugins/**/*.mjs', 'mock-server/**/*.mjs', '*.config.*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

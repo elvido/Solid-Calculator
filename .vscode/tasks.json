@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build: Production",
+      "type": "shell",
+      "command": "yarn",
+      "args": ["build:prd"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "panel": "shared",
+        "focus": false,
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    }
+    {
+      "label": "Format: Update",
+      "type": "shell",
+      "command": "yarn",
+      "args": ["format:update"],
+      "group": {
+        "kind": "build"
+      },
+      "presentation": {
+        "panel": "shared",
+        "focus": false,
+        "reveal": "always"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

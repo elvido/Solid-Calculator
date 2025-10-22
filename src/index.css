@@ -4,3 +4,15 @@
 @layer components {
   /* Optional: custom tweaks */
 }
+
+.btn-operator {
+  @apply btn aspect-square w-full bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700;
+}
+
+.btn-function {
+  @apply btn aspect-square w-full bg-gray-700 text-white hover:bg-gray-800 active:bg-gray-900;
+}
+
+.btn-digit {
+  @apply btn aspect-square w-full bg-gray-500 text-white hover:bg-gray-600 active:bg-gray-700;
+}

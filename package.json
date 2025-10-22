@@ -1,15 +1,15 @@
 {
   "name": "solid-calculator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
-    "dev": "rollup -w -c rollup.config.dev.js",
-    "build": "rollup -c rollup.config.prd.js",
-    "preview": "serve dist",
-    "start:mock": "nodemon --config mock-server/nodemon.json",
+    "build:dev": "rollup -w -c rollup.config.dev.mjs",
+    "build:prd": "rollup -c rollup.config.prd.mjs",
+    "start:mock": "cross-env MOCK=development nodemon --config mock-server/nodemon.json",
+    "start:frontend": "cross-env MOCK=development yarn build:dev",
     "start:dev": "concurrently -n frontend,mock -c blue,green \"yarn start:frontend\" \"yarn start:mock\"",
-    "start:frontend": "cross-env MOCK=development yarn dev",
-    "build:preview": "yarn build && yarn preview",
+    "start:preview": "node ./plugins/expressServe.mjs dist",
+    "build:preview": "yarn build:dev && yarn start:preview",
     "format:update": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -24,6 +24,7 @@
     "@rollup/plugin-typescript": "^12.1.4",
     "@tailwindcss/postcss": "^4.1.14",
     "@types/minimatch": "^6.0.0",
+    "@types/web": "^0.0.281",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "autoprefixer": "^10.4.21",
@@ -32,6 +33,7 @@
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "daisyui": "^5.3.1",
+    "dotenv": "^17.2.3",
     "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
@@ -40,6 +42,7 @@
     "http-proxy-middleware": "^3.0.5",
     "http-proxy-node16": "^1.0.6",
     "mime-types": "^3.0.1",
+    "minimist": "^1.2.8",
     "morgan": "^1.10.1",
     "nodemon": "^3.1.10",
     "open": "^10.2.0",
@@ -54,19 +57,33 @@
     "rollup-plugin-livereload": "^2.0.5",
     "rollup-plugin-postcss": "^4.0.2",
     "rollup-preset-solid": "^3.0.0",
-    "serve": "^14.2.5",
     "solid-js": "^1.9.9",
     "tailwindcss": "^4.1.14",
     "tslib": "^2.8.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "url": "^0.11.4"
   },
   "resolutions": {
     "http-proxy": "npm:http-proxy-node16@^1.0.6",
     "glob": "^9.0.0",
     "stable": "^0.1.8"
   },
-  "devDependencies": {
-    "yarn-deduplicate": "^6.0.2"
+  "packageManager": "yarn@4.10.3",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elvido/Solid-Calculator.git"
   },
-  "packageManager": "yarn@4.10.3"
+  "keywords": [
+    "SolidJS",
+    "daisyui",
+    "tailwindcss",
+    "rollup",
+    "template"
+  ],
+  "author": "Ralf Hofmann",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/elvido/Solid-Calculator/issues"
+  },
+  "homepage": "https://github.com/elvido/Solid-Calculator#readme"
 }
