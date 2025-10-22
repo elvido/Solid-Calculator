@@ -135,7 +135,10 @@ function createServer(options = {}) {
 
   // SPA fallback for client-side routing
   if (options.historyApiFallback) {
-    const fallbackPath = typeof options.historyApiFallback === 'string' ? options.historyApiFallback : '/index.html';
+    const fallbackPath =
+      typeof options.historyApiFallback === 'string'
+        ? options.historyApiFallback.replace(/^\//, '') // remove leading slash
+        : 'index.html';
 
     app.use((req, res, next) => {
       if (req.method === 'GET') {

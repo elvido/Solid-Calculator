@@ -6,6 +6,7 @@ export default {
   open: true,
   contentBase: 'dist',
   port: 3000,
+  historyApiFallback: true,
   verbose: true,
   traceRequests: true,
   proxy: {
