@@ -16,7 +16,7 @@
         "reveal": "always"
       },
       "problemMatcher": []
-    }
+    },
     {
       "label": "Format: Update",
       "type": "shell",
@@ -31,6 +31,22 @@
         "reveal": "always"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Start: Dev",
+      "type": "shell",
+      "command": "yarn",
+      "args": ["start:dev"],
+      "group": {
+        "kind":"test"
+      },
+      "presentation": {
+        "panel": "shared",
+        "focus": false,
+        "reveal": "always"
+      },
+      "isBackground": true,
+      "problemMatcher": ["$eslint-compact"]
     }
   ]
 }

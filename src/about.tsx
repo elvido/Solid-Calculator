@@ -8,7 +8,7 @@ export default function About() {
           <h2 class="text-2xl font-bold text-base-content text-opacity-70">About this Solid Calculator</h2>
           <div class="prose max-w-none">
             <p>
-              This app is a lightweight Single Page Application (SPA) that implements a desktop calculator{' '}
+              This lightweight Single Page Application (SPA) delivers a sleek desktop calculator built with{' '}
               <a
                 href="https://www.solidjs.com/"
                 target="_blank"
@@ -53,11 +53,12 @@ export default function About() {
               >
                 Yarn
               </a>
-              . It serves as a clean, modular template for new projects built on the same modern frontend stack.
+              . Designed as a clean, modular template, it offers a solid foundation for new projects leveraging the same
+              modern frontend stack.
             </p>
+            <p>It’s built to be easy to use, intuitive, structurally adaptable, and simple to maintain over time.</p>
             <p>
-              Built with <span class="text-red-500">❤️</span> by Ralf and collaborators, it emphasizes clarity,
-              flexibility, and maintainability.
+              Crafted with <span class="text-red-500">❤️</span> by Ralf and collaborators.
             </p>
           </div>
           <div class="flex justify-between items-center mt-4">
