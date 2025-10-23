@@ -17,7 +17,7 @@ If no `--config` is provided, it falls back to:
 ## 🛠️ CLI Options
 
 | Flag       | Alias | Type     | Description                                            |
-| ---------- | ----- | -------- | ------------------------------------------------------ |
+|------------|-------|----------|--------------------------------------------------------|
 | `--config` | `-c`  | `string` | Path to the config file. Must export a default object. |
 
 ## 🔍 Config Resolution Logic
@@ -31,22 +31,22 @@ If the file is missing or invalid, the script exits with an error.
 
 ## ⚙️ Config Options (same as for rollup-plugin-express-serve)
 
-| Option               | Type                                                                                             | Default       | Description                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------ | ------------- | -------------------------------------------------------------------------------------------- |
-| `contentBase`        | `string` or `string[]`                                                                           | `''`          | Directory or directories to serve static files from                                          |
-| `headers`            | `Record<string, string>`                                                                         | `undefined`   | Custom headers to apply to all responses                                                     |
-| `historyApiFallback` | `boolean` or `string`                                                                            | `false`       | Enable SPA fallback. If `true`, serves `index.html`. If a string, serves the specified file |
-| `host`               | `string`                                                                                         | `'localhost'` | Hostname to bind the server to                                                               |
-| `https`              | `{ key: string, cert: string }`                                                                  | `undefined`   | HTTPS configuration with paths to key and cert files                                         |
-| `middleware`         | `express.RequestHandler[]`                                                                       | `undefined`   | Additional Express middleware to apply                                                       |
-| `mimeTypes`          | `Record<string, string \| string[]>`                                                             | `undefined`   | Custom MIME type definitions to override or extend defaults                                  |
-| `onListening`        | `(server: http.Server \| https.Server) => void`                                                  | `undefined`   | Callback invoked once the server is listening                                                |
-| `open`               | `boolean`                                                                                        | `false`       | Whether to open the browser after the server starts                                          |
-| `openPage`           | `string`                                                                                         | `undefined`   | Page to open in the browser (relative path or full URL)                                      |
-| `port`               | `number`                                                                                         | `10001`       | Port to listen on                                                                            |
-| `proxy`              | `Record<string, string \| { target: string, stripPrefix?: boolean }>`                            | `undefined`   | Proxy configuration: route to target mapping. Supports optional prefix stripping             |
-| `traceRequests`      | `string` or `{ format?: string \| ((tokens, req, res) => string), filter?: string \| string[] }` | `undefined`   | Morgan logging format or configuration. Supports custom format and route filtering           |
-| `verbose`            | `boolean`                                                                                        | `true`        | Whether to log server and proxy activity                                                     |
+| Option               | Type                                                                                             | Default       | Description                                                                                                                                        |
+|----------------------|--------------------------------------------------------------------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `contentBase`        | `string` or `string[]`                                                                           | `''`          | Directory or directories to serve static files from                                                                                                |
+| `headers`            | `Record<string, string>`                                                                         | `undefined`   | Custom headers to apply to all responses                                                                                                           |
+| `historyAPIFallback` | `boolean` \| `string` \| `object`                                                                | `false`       | Enables SPA fallback: `true` serves `index.html`, a `string` serves that file, and an `object` lets you set a custom `path` and optional `routes`. |
+| `host`               | `string`                                                                                         | `'localhost'` | Hostname to bind the server to                                                                                                                     |
+| `https`              | `{ key: string, cert: string }`                                                                  | `undefined`   | HTTPS configuration with paths to key and cert files                                                                                               |
+| `middleware`         | `express.RequestHandler[]`                                                                       | `undefined`   | Additional Express middleware to apply                                                                                                             |
+| `mimeTypes`          | `Record<string, string \| string[]>`                                                             | `undefined`   | Custom MIME type definitions to override or extend defaults                                                                                        |
+| `onListening`        | `(server: http.Server \| https.Server) => void`                                                  | `undefined`   | Callback invoked once the server is listening                                                                                                      |
+| `open`               | `boolean`                                                                                        | `false`       | Whether to open the browser after the server starts                                                                                                |
+| `openPage`           | `string`                                                                                         | `undefined`   | Page to open in the browser (relative path or full URL)                                                                                            |
+| `port`               | `number`                                                                                         | `10001`       | Port to listen on                                                                                                                                  |
+| `proxy`              | `Record<string, string \| { target: string, stripPrefix?: boolean }>`                            | `undefined`   | Proxy configuration: route to target mapping. Supports optional prefix stripping                                                                   |
+| `traceRequests`      | `string` or `{ format?: string \| ((tokens, req, res) => string), filter?: string \| string[] }` | `undefined`   | Morgan logging format or configuration. Supports custom format and route filtering                                                                 |
+| `verbose`            | `boolean`                                                                                        | `true`        | Whether to log server and proxy activity                                                                                                           |
 
 ## 📦 Example Config File
 
@@ -63,7 +63,7 @@ export default {
       stripPrefix: true
     }
   },
-  historyApiFallback: true,
+  historyAPIFallback: true,
   verbose: true
 };
 ```

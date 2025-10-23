@@ -54,6 +54,7 @@ export default {
       ...postcssConfig,
       extract: 'app.css',
       minimize: true,
+      sourceMap: true,
     }),
     copy({
       targets: [{ src: 'assets/*.*', dest: 'dist' }],

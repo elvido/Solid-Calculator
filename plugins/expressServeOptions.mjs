@@ -8,7 +8,7 @@
  * @property {boolean} [open=false] - Open browser after server starts
  * @property {string} [openPage='/'] - Page to open (relative or full URL)
  * @property {Record<string, string | { target: string, stripPrefix?: boolean }>} [proxy] - Proxy route mappings
- * @property {boolean | string} [historyApiFallback] - SPA fallback (true or custom file path)
+ * @property {boolean | string | { path?: string, routes?: string[] }} [historyAPIFallback] - SPA fallback: `true` serves index.html, a string serves the given file, or an object allows a custom `path` and optional `routes`
  * @property {Record<string, string>} [headers] - Custom response headers
  * @property {boolean} [verbose=true] - Log server and proxy activity
  * @property {(server: import('http').Server | import('https').Server) => void} [onListening] - Callback when server starts

@@ -1,6 +1,6 @@
 // expressServe.mjs
 import { createServing } from './rollup-plugin-express-serve.mjs';
-import './types.mjs'; // JSDoc typedefs
+import './expressServeOptions.mjs'; // JSDoc typedefs
 import minimist from 'minimist';
 import { pathToFileURL } from 'url';
 import path from 'path';

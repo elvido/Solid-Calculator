@@ -1,12 +1,12 @@
 // express-serve.config.mjs
 import { exampleMocking } from './plugins/example-mocking-plugin.mjs';
 
-/** @type {import('./plugins/types.d.ts').ExpressServeOptions} */
+/** @type {import('./plugins/types.d.ts').expressServeOptions} */
 export default {
   open: true,
   contentBase: 'dist',
   port: 3000,
-  historyApiFallback: true,
+  historyAPIFallback: ['/about'],
   verbose: true,
   traceRequests: true,
   proxy: {

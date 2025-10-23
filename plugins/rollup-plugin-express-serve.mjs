@@ -8,7 +8,9 @@ import { createServer as createHttpsServer } from 'https';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import open from 'open';
 import morgan from 'morgan';
-import './types.mjs'; // For JSDoc
+import chalk from 'chalk';
+import './expressServeOptions.mjs'; // For JSDoc
+import { escapeLeadingUnderscores } from 'typescript';
 
 let server; // Holds the active server instance for reuse or shutdown
 
@@ -44,14 +46,34 @@ function createServer(options = {}) {
     let format;
     let skip;
 
+    // Register custom tokens once
+    morgan.token('trace-source', (req, res) => res.getHeader('x-trace-source') || 'unknown');
+    morgan.token('trace-target', (req, res) => res.getHeader('x-trace-target') || '');
+    morgan.token('content-length', (req, res) => {
+      const len = res.getHeader('content-length');
+      return len != null ? len : '-';
+    });
+
     const defaultFormat = (tokens, req, res) => {
-      const source = res.getHeader('x-trace-source') || 'unknown';
-      const target = res.getHeader('x-trace-target') || '';
       const method = tokens.method(req, res);
       const url = tokens.url(req, res);
       const status = tokens.status(req, res);
+      const source = tokens['trace-source'](req, res);
+      const target = tokens['trace-target'](req, res);
       const time = tokens['response-time'](req, res);
-      return `[TRACE] ${method} ${url} → ${status} (${source}) +${time}ms${target ? ` → ${target}` : ''}`;
+      const length = tokens['content-length'](req, res);
+      const coloredStatus =
+        status >= 500
+          ? chalk.yellow.bold(status)
+          : status >= 400
+            ? chalk.red.bold(status)
+            : status >= 300
+              ? chalk.cyan.bold(status)
+              : status >= 200
+                ? chalk.green.bold(status)
+                : chalk.bold(status);
+
+      return `[TRACE] ${method} ${url} → ${coloredStatus} (${source})${target ? ` → ${target}` : ''} +${time}ms : ${length} bytes`;
     };
 
     if (typeof options.traceRequests === 'string') {
@@ -134,17 +156,40 @@ function createServer(options = {}) {
   }
 
   // SPA fallback for client-side routing
-  if (options.historyApiFallback) {
-    const fallbackPath = typeof options.historyApiFallback === 'string' ? options.historyApiFallback : 'index.html';
+  if (options.historyAPIFallback) {
+    const basePath = contentBase[0];
+    let fallbackPath;
 
-    app.use((req, res, next) => {
+    // fallback request handler
+    const fallbackRequestHandler = (req, res, next) => {
       if (req.method === 'GET') {
         res.setHeader('x-trace-source', 'spa-fallback');
-        res.sendFile(path.resolve(contentBase[0], fallbackPath));
+        res.sendFile(fallbackPath);
       } else {
         next();
       }
-    });
+    };
+
+    if (typeof options.historyAPIFallback === 'object') {
+      fallbackPath = path.resolve(
+        basePath,
+        typeof options.historyAPIFallback.path === 'string' ? options.historyAPIFallback.path : 'index.html'
+      );
+      const routes = Array.isArray(options.historyAPIFallback.routes)
+        ? options.historyAPIFallback.routes
+        : Array.isArray(options.historyAPIFallback)
+          ? options.historyAPIFallback
+          : [];
+      routes.forEach((route) => {
+        if (typeof route === 'string') app.get(route, fallbackRequestHandler);
+      });
+    } else {
+      fallbackPath = path.resolve(
+        basePath,
+        typeof options.historyAPIFallback === 'string' ? options.historyAPIFallback : 'index.html'
+      );
+      app.use(fallbackRequestHandler);
+    }
   }
 
   // Gracefully close previous server if Rollup restarts
