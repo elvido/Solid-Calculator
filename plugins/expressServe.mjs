@@ -1,30 +1,73 @@
-// expressServe.mjs
 import { createServing } from './rollup-plugin-express-serve.mjs';
-import './expressServeOptions.mjs'; // JSDoc typedefs
-import minimist from 'minimist';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { pathToFileURL } from 'url';
 import path from 'path';
 import fs from 'fs';
+import util from 'util';
 
-// Parse CLI arguments (--config)
-const argv = minimist(process.argv.slice(2), {
-  string: ['config'],
-  alias: { c: 'config' },
-  default: {},
-});
+/**
+ * @typedef {import('./express-serve-options').ExpressServeOptions} ExpressServeOptions
+ */
+
+/**
+ * Main entry point for starting the Express server with configuration.
+ */
+
+// Parse CLI arguments with Yargs
+const argv = yargs(hideBin(process.argv))
+  .option('config', {
+    alias: 'c',
+    type: 'string',
+    describe: 'Path to config file',
+  })
+  .option('folder', {
+    alias: 'f',
+    type: 'string',
+    describe: 'Static folders (comma-separated)',
+  })
+  .option('port', {
+    alias: 'p',
+    type: 'number',
+    describe: 'Port to listen on',
+  })
+  .option('host', {
+    alias: 'h',
+    type: 'string',
+    describe: 'Host to bind the server to',
+  })
+  .option('open', {
+    alias: 'o',
+    type: 'string',
+    describe: 'Page or URL to open after server starts',
+  })
+  .option('verbose', {
+    alias: 'v',
+    type: 'boolean',
+    describe: 'Enable verbose logging',
+  })
+  .option('trace', {
+    alias: 't',
+    type: 'boolean',
+    describe: 'Enable request tracing',
+  })
+  .option('dump', {
+    alias: 'd',
+    type: 'boolean',
+    describe: 'Dump resolved config and exit',
+  })
+  .parse();
 
 const cwd = process.cwd();
 let configPath;
 
 if (argv.config) {
-  // Use the exact path provided by the user
   configPath = path.resolve(cwd, argv.config);
   if (!fs.existsSync(configPath)) {
     console.error(`Error: Config file not found at "${configPath}"`);
     process.exit(1);
   }
 } else {
-  // Try fallback filenames with supported extensions for default config
   const defaultConfigName = 'express-serve.config';
   const supportedExtensions = ['.mjs', '.js', '.cjs'];
 
@@ -33,18 +76,40 @@ if (argv.config) {
     .find((p) => fs.existsSync(p));
 }
 
+/** @type {import('./express-serve-options').ExpressServeOptions} */
 let config = {};
 if (configPath) {
   const configModule = await import(pathToFileURL(configPath).href);
   config = configModule.default;
 }
 
-const serving = createServing(config);
-serving.startServer();
+// Apply CLI overrides
+if (argv.verbose !== undefined) config.verbose = argv.verbose;
+if (argv.open !== undefined) config.openPage = argv.open;
+if (argv.port !== undefined) config.port = argv.port;
+if (argv.host !== undefined) config.host = argv.host;
+if (argv.trace !== undefined) config.traceRequests = argv.trace;
+if (argv.folder !== undefined)
+  config.contentBase = argv.folder.includes(',') ? argv.folder.split(',').map((s) => s.trim()) : argv.folder.trim();
 
-if (config.verbose !== false) {
-  serving.printResolvePaths();
+// Dump config if requested
+if (argv.dump !== undefined) {
+  console.log('[ExpressServeOptions Dump]');
+  console.log(util.inspect(config, { depth: null, colors: true }));
+  process.exit(0);
 }
-if (config.open) {
-  serving.openPage();
-}
+
+// Start server
+const serving = createServing(config);
+
+const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
+terminationSignals.forEach((signal) => {
+  process.on(signal, () => {
+    serving.stopServing();
+    process.exit();
+  });
+});
+
+serving.startServing();
+serving.printResolvePaths();
+serving.openPage();

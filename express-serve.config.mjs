@@ -1,9 +1,9 @@
 // express-serve.config.mjs
 import { exampleMocking } from './plugins/example-mocking-plugin.mjs';
 
-/** @type {import('./plugins/types.d.ts').expressServeOptions} */
+/** @type {import('./plugins/express-serve-options').ExpressServeOptions} */
 export default {
-  open: true,
+  openPage: true,
   contentBase: 'dist',
   port: 3000,
   historyAPIFallback: ['/about'],

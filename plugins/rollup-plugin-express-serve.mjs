@@ -9,31 +9,54 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import open from 'open';
 import morgan from 'morgan';
 import chalk from 'chalk';
-import './expressServeOptions.mjs'; // For JSDoc
-import { escapeLeadingUnderscores } from 'typescript';
+import { normalizeExpressServeOptions } from './express-serve-options.mjs';
 
 let server; // Holds the active server instance for reuse or shutdown
+
+/**
+ * Close a running server instance.
+ */
+function closeServer() {
+  if (!server) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    server.close((err) => {
+      server = undefined;
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+/**
+ * Ensures the server shuts down cleanly on termination signals.
+ */
+function closeServerOnTermination() {
+  const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
+  terminationSignals.forEach((signal) => {
+    process.on(signal, async () => {
+      await closeServer();
+      process.exit();
+    });
+  });
+}
 
 /**
  * Creates and configures an Express server based on the provided options.
  * This function is used by both the Rollup plugin and standalone wrappers.
  *
- * @param {ExpressServeOptions} options - Configuration options
+ * @param {import('./express-serve-options').ExpressServeOptions} options - Configuration options
  * @returns {import('http').Server | import('https').Server} - The created server instance
  */
 function createServer(options = {}) {
   const app = express();
-  const port = options.port || 10001;
-  const host = options.host || 'localhost';
-  const contentBase = Array.isArray(options.contentBase) ? options.contentBase : [options.contentBase || ''];
-  const customMimeTypes = options.mimeTypes || {};
 
   /**
    * Resolves MIME type for a given file path, using custom overrides if provided.
    */
   function resolveMime(filePath) {
     const ext = path.extname(filePath).toLowerCase();
-    const custom = customMimeTypes[ext];
+    const custom = options.mimeTypes[ext];
     return typeof custom === 'string'
       ? custom
       : Array.isArray(custom)
@@ -43,9 +66,6 @@ function createServer(options = {}) {
 
   // Enable request logging via Morgan if configured
   if (options.traceRequests) {
-    let format;
-    let skip;
-
     // Register custom tokens once
     morgan.token('trace-source', (req, res) => res.getHeader('x-trace-source') || 'unknown');
     morgan.token('trace-target', (req, res) => res.getHeader('x-trace-target') || '');
@@ -76,28 +96,33 @@ function createServer(options = {}) {
       return `[TRACE] ${method} ${url} → ${coloredStatus} (${source})${target ? ` → ${target}` : ''} +${time}ms : ${length} bytes`;
     };
 
-    if (typeof options.traceRequests === 'string') {
-      format = options.traceRequests;
-    } else if (typeof options.traceRequests === 'object') {
-      format = options.traceRequests.format || defaultFormat;
-      const filters = Array.isArray(options.traceRequests.filter)
-        ? options.traceRequests.filter
-        : typeof options.traceRequests.filter === 'string'
-          ? [options.traceRequests.filter]
-          : null;
+    const filter = options.traceRequests.filter;
+    const format = options.traceRequests.format ? options.traceRequests.format : defaultFormat;
+    let skip = () => false;
 
-      if (filters) {
-        skip = (req) => !filters.some((prefix) => req.originalUrl.startsWith(prefix));
-      }
-    } else {
-      format = defaultFormat;
+    if (Array.isArray(filter) && filter.length > 0) {
+      const globToRegex = (pattern) =>
+        new RegExp(
+          '^' +
+            pattern
+              .replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&') // escape special chars
+              .replace(/\*/g, '.*') // * → .*
+              .replace(/\?/g, '.') + // ? → .
+            '$'
+        );
+      const regexFilter = filter.filter((f) => typeof f === 'string' && f.trim()).map((f) => globToRegex(f.trim()));
+
+      skip = (req) => {
+        const url = (req.originalUrl || req.url || '').split('?')[0];
+        return !regexFilter.some((rx) => rx.test(url));
+      };
     }
 
     app.use(morgan(format, { skip }));
   }
 
   // Apply custom response headers
-  if (options.headers) {
+  if (Object.keys(options.headers).length > 0) {
     app.use((req, res, next) => {
       Object.entries(options.headers).forEach(([key, value]) => {
         res.setHeader(key, value);
@@ -112,7 +137,7 @@ function createServer(options = {}) {
   }
 
   // Serve static files from configured directories
-  contentBase.forEach((base) => {
+  options.contentBase.forEach((base) => {
     app.use(
       express.static(path.resolve(base), {
         setHeaders: (res, filePath) => {
@@ -127,8 +152,8 @@ function createServer(options = {}) {
   // Setup proxy routes
   if (options.proxy) {
     Object.entries(options.proxy).forEach(([route, config]) => {
-      const target = typeof config === 'string' ? config : config.target;
-      const stripPrefix = typeof config === 'object' && config.stripPrefix === true;
+      const target = config.target;
+      const stripPrefix = config.stripPrefix !== false;
 
       const router = express.Router();
 
@@ -157,8 +182,7 @@ function createServer(options = {}) {
 
   // SPA fallback for client-side routing
   if (options.historyAPIFallback) {
-    const basePath = contentBase[0];
-    let fallbackPath;
+    const fallbackPath = path.resolve(options.contentBase[0], options.historyAPIFallback.path);
 
     // fallback request handler
     const fallbackRequestHandler = (req, res, next) => {
@@ -170,31 +194,18 @@ function createServer(options = {}) {
       }
     };
 
-    if (typeof options.historyAPIFallback === 'object') {
-      fallbackPath = path.resolve(
-        basePath,
-        typeof options.historyAPIFallback.path === 'string' ? options.historyAPIFallback.path : 'index.html'
-      );
-      const routes = Array.isArray(options.historyAPIFallback.routes)
-        ? options.historyAPIFallback.routes
-        : Array.isArray(options.historyAPIFallback)
-          ? options.historyAPIFallback
-          : [];
-      routes.forEach((route) => {
+    if (Array.isArray(options.historyAPIFallback.routes) && options.historyAPIFallback.routes.length > 0) {
+      options.historyAPIFallback.routes.forEach((route) => {
         if (typeof route === 'string') app.get(route, fallbackRequestHandler);
       });
     } else {
-      fallbackPath = path.resolve(
-        basePath,
-        typeof options.historyAPIFallback === 'string' ? options.historyAPIFallback : 'index.html'
-      );
       app.use(fallbackRequestHandler);
     }
   }
 
   // Gracefully close previous server if Rollup restarts
   if (server) {
-    server.close();
+    closeServer();
   } else {
     closeServerOnTermination();
   }
@@ -220,23 +231,8 @@ function createServer(options = {}) {
     }
   });
 
-  const onListening = typeof options.onListening === 'function' ? options.onListening : () => {};
-  server.listen(port, host, () => onListening(server));
-
-  /**
-   * Ensures the server shuts down cleanly on termination signals.
-   */
-  function closeServerOnTermination() {
-    const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
-    terminationSignals.forEach((signal) => {
-      process.on(signal, () => {
-        if (server) {
-          server.close();
-          process.exit();
-        }
-      });
-    });
-  }
+  // Start listening
+  server.listen(options.port, options.host, () => options.onListening(server));
 
   return server;
 }
@@ -245,33 +241,42 @@ function createServer(options = {}) {
  * Creates a serving utility object with methods to start the server,
  * print resolved paths, and open the browser.
  *
- * @param {ExpressServeOptions} options - Configuration options
- * @returns {{ startServer: Function, printResolvePaths: Function, openPage: Function }}
+ * @param {import('./express-serve-options').ExpressServeOptions} options - Configuration options
+ * @returns {{ startServing: Function, stopServing: Function, printResolvePaths: Function, openPage: Function }}
  */
 export function createServing(options = {}) {
+  // Normalize options
+  options = normalizeExpressServeOptions(options);
+
   return {
-    startServer: () => createServer(options),
+    startServing: () => {
+      createServer(options);
+    },
+
+    stopServing: async () => {
+      await closeServer();
+    },
 
     printResolvePaths: () => {
-      const protocol = options.https ? 'https' : 'http';
-      const url = `${protocol}://${options.host || 'localhost'}:${options.port || 10001}`;
-      const bases = Array.isArray(options.contentBase) ? options.contentBase : [options.contentBase || ''];
-      bases.forEach((base) => {
-        console.log(`\x1b[32m${url}\x1b[0m -> ${path.resolve(base)}`);
-      });
+      if (options.verbose !== false) {
+        const protocol = options.https ? 'https' : 'http';
+        const url = `${protocol}://${options.host}:${options.port}`;
+        options.contentBase.forEach((base) => {
+          console.log(`[serving] ${chalk.green(url)} -> ${path.resolve(base)}`);
+        });
+      }
     },
 
     openPage: () => {
-      const protocol = options.https ? 'https' : 'http';
-      const url = `${protocol}://${options.host || 'localhost'}:${options.port || 10001}`;
-      let opening;
-      if (typeof options.openPage === 'string' && /^https?:\/\//.test(options.openPage)) {
-        opening = options.openPage;
-      } else {
-        const page = options.openPage || '/';
-        opening = url + (page.startsWith('/') ? page : '/' + page);
+      if (options.openPage) {
+        const protocol = options.https ? 'https' : 'http';
+        const url = `${protocol}://${options.host}:${options.port}`;
+        const opening = /^https?:\/\//.test(options.openPage)
+          ? options.openPage
+          : url + (options.openPage.startsWith('/') ? options.openPage : '/' + options.openPage);
+        if (options.verbose) console.log(`[openPage] Opening browser at: ${opening}`);
+        open(opening);
       }
-      open(opening);
     },
   };
 }
@@ -279,12 +284,12 @@ export function createServing(options = {}) {
 /**
  * Rollup plugin entry point. Starts the server and hooks into Rollup's lifecycle.
  *
- * @param {ExpressServeOptions} options - Configuration options
+ * @param {import('./express-serve-options').ExpressServeOptions} options - Configuration options
  * @returns {import('rollup').Plugin} - Rollup plugin object
  */
 function expressServe(options = {}) {
   const serving = createServing(options);
-  serving.startServer();
+  serving.startServing();
 
   let bundleCount = 0;
 
