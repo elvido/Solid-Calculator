@@ -9,6 +9,8 @@ export default function Calculator() {
   const [expression, setExpression] = createSignal('');
   const [theme, setTheme] = createSignal('light');
 
+  const digitLimit = 14;
+
   onMount(() => {
     loadConfig();
   });
@@ -61,17 +63,30 @@ export default function Calculator() {
 
   function formatResult(value: number): string {
     return Number(value)
-      .toPrecision(12)
+      .toPrecision(digitLimit)
       .replace(/\.?0+$/, '');
   }
 
+  function applyDigitLimit(input: string): string {
+    const unsigned = input.startsWith('-') || input.startsWith('+') ? input.slice(1) : input;
+    const digitsOnly = unsigned.replace('.', '');
+    const excess = digitsOnly.length - digitLimit;
+
+    return excess <= 0 ? input : input.slice(0, input.length - excess);
+  }
+
   const inputDigit = (digit: string) => {
-    setDisplay(waitingForOperand() ? digit : display() === '0' ? digit : display() + digit);
+    const current = display();
+    const next = waitingForOperand() ? digit : current === '0' ? digit : current + digit;
+    setDisplay(applyDigitLimit(next));
     setWaitingForOperand(false);
   };
 
   const inputDot = () => {
-    if (!display().includes('.')) setDisplay(display() + '.');
+    const current = display();
+    if (!current.includes('.')) {
+      setDisplay(applyDigitLimit(current + '.'));
+    }
   };
 
   const clear = () => {
