@@ -29,19 +29,6 @@ function closeServer() {
 }
 
 /**
- * Ensures the server shuts down cleanly on termination signals.
- */
-function closeServerOnTermination() {
-  const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
-  terminationSignals.forEach((signal) => {
-    process.on(signal, async () => {
-      await closeServer();
-      process.exit();
-    });
-  });
-}
-
-/**
  * Creates and configures an Express server based on the provided options.
  * This function is used by both the Rollup plugin and standalone wrappers.
  *
@@ -206,8 +193,6 @@ function createServer(options = {}) {
   // Gracefully close previous server if Rollup restarts
   if (server) {
     closeServer();
-  } else {
-    closeServerOnTermination();
   }
 
   // Create HTTP or HTTPS server
@@ -257,12 +242,12 @@ export function createServing(options = {}) {
       await closeServer();
     },
 
-    printResolvePaths: () => {
+    printPaths: () => {
       if (options.verbose !== false) {
         const protocol = options.https ? 'https' : 'http';
         const url = `${protocol}://${options.host}:${options.port}`;
         options.contentBase.forEach((base) => {
-          console.log(`[serving] ${chalk.green(url)} -> ${path.resolve(base)}`);
+          console.log(`[VERBOSE] Serving: ${chalk.green(url)} -> ${path.resolve(base)}`);
         });
       }
     },
@@ -274,7 +259,7 @@ export function createServing(options = {}) {
         const opening = /^https?:\/\//.test(options.openPage)
           ? options.openPage
           : url + (options.openPage.startsWith('/') ? options.openPage : '/' + options.openPage);
-        if (options.verbose) console.log(`[openPage] Opening browser at: ${opening}`);
+        if (options.verbose != false) console.log(`[VERBOSE] Opening browser at: ${opening}`);
         open(opening);
       }
     },
@@ -289,6 +274,18 @@ export function createServing(options = {}) {
  */
 function expressServe(options = {}) {
   const serving = createServing(options);
+
+  /**
+   * Ensures the server shuts down cleanly on termination signals.
+   */
+  const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
+  terminationSignals.forEach((signal) => {
+    process.on(signal, () => {
+      serving.stopServing();
+      process.exit();
+    });
+  });
+
   serving.startServing();
 
   let bundleCount = 0;
@@ -298,12 +295,8 @@ function expressServe(options = {}) {
     generateBundle() {
       if (bundleCount === 0) {
         bundleCount++;
-        if (options.verbose !== false) {
-          serving.printResolvePaths();
-        }
-        if (options.open) {
-          serving.openPage();
-        }
+        serving.printPaths();
+        serving.openPage();
       } else {
         bundleCount++;
       }

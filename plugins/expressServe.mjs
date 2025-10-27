@@ -4,7 +4,6 @@ import { hideBin } from 'yargs/helpers';
 import { pathToFileURL } from 'url';
 import path from 'path';
 import fs from 'fs';
-import util from 'util';
 
 /**
  * @typedef {import('./express-serve-options').ExpressServeOptions} ExpressServeOptions
@@ -51,11 +50,6 @@ const argv = yargs(hideBin(process.argv))
     type: 'boolean',
     describe: 'Enable request tracing',
   })
-  .option('dump', {
-    alias: 'd',
-    type: 'boolean',
-    describe: 'Dump resolved config and exit',
-  })
   .parse();
 
 const cwd = process.cwd();
@@ -92,13 +86,6 @@ if (argv.trace !== undefined) config.traceRequests = argv.trace;
 if (argv.folder !== undefined)
   config.contentBase = argv.folder.includes(',') ? argv.folder.split(',').map((s) => s.trim()) : argv.folder.trim();
 
-// Dump config if requested
-if (argv.dump !== undefined) {
-  console.log('[ExpressServeOptions Dump]');
-  console.log(util.inspect(config, { depth: null, colors: true }));
-  process.exit(0);
-}
-
 // Start server
 const serving = createServing(config);
 
@@ -111,5 +98,5 @@ terminationSignals.forEach((signal) => {
 });
 
 serving.startServing();
-serving.printResolvePaths();
+serving.printPaths();
 serving.openPage();
