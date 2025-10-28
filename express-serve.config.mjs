@@ -1,10 +1,11 @@
 // express-serve.config.mjs
+import { devtoolsPlugin } from './plugins/express-serve-devtools.mjs';
 import { exampleMocking } from './plugins/example-mocking-plugin.mjs';
 
 /** @type {import('./plugins/express-serve-options').ExpressServeOptions} */
 export default {
   openPage: true,
-  contentBase: 'dist',
+  contentBase: ['dist', 'src'],
   port: 3000,
   historyAPIFallback: ['/about'],
   verbose: true,
@@ -16,5 +17,5 @@ export default {
       stripPrefix: true,
     },
   },
-  middleware: [exampleMocking()],
+  middleware: [devtoolsPlugin({ projectRoot: './src', verbose: false }), exampleMocking()],
 };

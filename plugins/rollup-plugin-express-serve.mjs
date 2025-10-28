@@ -223,11 +223,11 @@ function createServer(options = {}) {
 }
 
 /**
- * Creates a serving utility object with methods to start the server,
- * print resolved paths, and open the browser.
+ * Creates a serving controller with lifecycle hooks and utility methods.
+ * Normalizes the provided options and returns an object to manage the server.
  *
  * @param {import('./express-serve-options').ExpressServeOptions} options - Configuration options
- * @returns {{ startServing: Function, stopServing: Function, printResolvePaths: Function, openPage: Function }}
+ * @returns {import('./express-serve-controller).ExpressServeController} - Serving controller
  */
 export function createServing(options = {}) {
   // Normalize options

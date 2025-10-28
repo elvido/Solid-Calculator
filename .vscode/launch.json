@@ -2,29 +2,50 @@
   "version": "0.2.0",
   "compounds": [
     {
-      "name": "Debug Frontend + Mock Server",
+      "name": "Debug Frontend (incl. Mocks)",
       "configurations": [
-        "Debug Frontend in Edge",
-        "Attach to Mock Server"
+        "Launch Mock Server",
+        "Serve Frontend",
+        "Debug Frontend in Edge"
       ]
     }
   ],
   "configurations": [
-
+    // 🧭 Attach debugger to frontend in Edge
     {
-      "name": "Attach by Process ID",
-      "processId": "${command:PickProcess}",
-      "request": "attach",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "type": "node"
+      "type": "msedge",
+      "request": "launch",
+      "name": "Debug Frontend in Edge",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/src",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///src/*": "${webRoot}/*",
+        "rollup:///src/*": "${webRoot}/*",
+        "file:///src/*": "${webRoot}/*"
+      }
+    },
+    // 🌐 Serve frontend locally (used for preview/debug)
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Serve Frontend",
+      "command": "node ./plugins/expressServe.mjs --config=express-serve.config.mjs --folder=dist,. --open=false",
+      "cwd": "${workspaceFolder}"
+    },
+    // 🌐 Launch Mock Server (used for preview/debug)
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Launch Mock Server",
+      "command": "node mock-server/index.mjs",
+      "cwd": "${workspaceFolder}"
     },
     // 🚀 Launch Express Server with symlink + ESM support
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug Express Server",
+      "name": "Debug Express Serve",
       "runtimeExecutable": "node",
       "runtimeArgs": [
         "--preserve-symlinks",
@@ -32,7 +53,9 @@
         "--experimental-modules",
         "--inspect=9229"
       ],
-      "args": ["plugins/expressServe.mjs"],
+      "args": [
+        "plugins/expressServe.mjs"
+      ],
       "cwd": "${workspaceFolder}",
       "env": {
         "MOCK": "development"
@@ -52,7 +75,9 @@
         "--experimental-modules",
         "--inspect=9229"
       ],
-      "args": ["mock-server/index.mjs"],
+      "args": [
+        "mock-server/index.mjs"
+      ],
       "cwd": "${workspaceFolder}",
       "env": {
         "MOCK": "development"
@@ -60,26 +85,6 @@
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },
-    // 🌐 Serve frontend locally (used for preview/debug)
-    {
-      "type": "node-terminal",
-      "request": "launch",
-      "name": "Debug Frontend",
-      "command": "node ./plugins/express.mjs dist -l 3000",
-      "cwd": "${workspaceFolder}"
-    },
-
-    // 🧭 Attach debugger to frontend in Edge
-    {
-      "type": "pwa-edge",
-      "request": "launch",
-      "name": "Debug Frontend in Edge",
-      "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}/src",
-      "sourceMaps": true,
-      "trace": true
-    },
-
     // 🧩 Attach to running mock server (port 9229)
     {
       "type": "pwa-node",
@@ -87,15 +92,25 @@
       "name": "Attach to Mock Server",
       "port": 9229,
       "restart": true,
-      "skipFiles": ["<node_internals>/**"]
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     },
-
     // 🧩 Attach to any Node process (generic)
     {
       "type": "node",
       "request": "attach",
       "name": "Attach to Node",
       "port": 9229
-    }
+    },
+    {
+      "name": "Attach by Process ID",
+      "processId": "${command:PickProcess}",
+      "request": "attach",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
   ]
 }

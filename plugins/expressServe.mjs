@@ -38,7 +38,21 @@ const argv = yargs(hideBin(process.argv))
   .option('open', {
     alias: 'o',
     type: 'string',
-    describe: 'Page or URL to open after server starts',
+    describe: 'Page/URL to open. Use -o- or --open=false to disable.',
+    coerce: (val) => {
+      if (typeof val === 'string')
+        switch (val.toLowerCase()) {
+          case 'false':
+          case '-':
+            return false;
+          case 'true':
+          case '+':
+            return true;
+          default:
+            return val; // treat as string path
+        }
+      else return val === undefined ? true : val;
+    },
   })
   .option('verbose', {
     alias: 'v',
@@ -49,6 +63,14 @@ const argv = yargs(hideBin(process.argv))
     alias: 't',
     type: 'boolean',
     describe: 'Enable request tracing',
+  })
+  .help()
+  .alias('help', '?') // use -? for help to avoid alias clash
+  .strict() // disallow unknown options
+  .fail((msg, err, yargs) => {
+    console.error(`\nError: ${msg}\n`);
+    console.log(yargs.help()); // print the help text
+    process.exit(1); // exit with failure
   })
   .parse();
 

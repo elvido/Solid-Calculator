@@ -7,6 +7,7 @@ import html from '@rollup/plugin-html';
 import typescript from '@rollup/plugin-typescript';
 import eslint from '@rollup/plugin-eslint';
 import postcssConfig from './postcss.config.mjs';
+import path from 'path';
 
 const baseHtml = (title, styles, scripts) =>
   `<!DOCTYPE html>
@@ -26,6 +27,33 @@ const baseHtml = (title, styles, scripts) =>
 </html>
 `;
 
+// Mapping table to rewrite or strip specific path prefixes in sourcemaps
+const transformSourceMapping = {
+  '../src': '', // Strip 'src/' completely
+  '../node_modules': 'modules', // Example: rewrite 'node_modules/' to 'modules/' for clarity
+};
+
+// Transform the pathnames of source file in sourcemaps
+// eslint-disable-next-line no-unused-vars
+const transformSourcePath = (relativeSourcePath, sourcemapPath) => {
+  const normalizedPath = path.normalize(relativeSourcePath);
+  console.log(`[INFO] relativeSourcePath: ${relativeSourcePath} -> ${normalizedPath}`);
+  for (const [prefix, rewrite] of Object.entries(transformSourceMapping)) {
+    const normalizedPrefix = path.normalize(prefix) + path.sep;
+    console.log(`[INFO] normalizedPrefix: ${normalizedPrefix}`);
+    if (normalizedPath.startsWith(normalizedPrefix)) {
+      // Compute relative path from the matched prefix
+      const relativePath = path.relative(normalizedPrefix, normalizedPath);
+      console.log(
+        `[INFO] path changed: ${relativePath} -> ${rewrite ? path.join(path.normalize(rewrite), relativePath) : relativePath}`
+      );
+      return rewrite ? path.join(path.normalize(rewrite), relativePath) : relativePath;
+    }
+  }
+  console.log(`[INFO] path is unchanged: ${normalizedPath}`);
+  return normalizedPath;
+};
+
 export default {
   input: 'src/index.tsx',
   output: {
@@ -33,6 +61,8 @@ export default {
     format: 'es',
     entryFileNames: 'app.js',
     assetFileNames: '[name][extname]',
+    sourcemap: true,
+    sourcemapPathTransform: transformSourcePath,
   },
   plugins: [
     resolve({
