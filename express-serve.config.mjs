@@ -17,5 +17,5 @@ export default {
       stripPrefix: true,
     },
   },
-  middleware: [devtoolsPlugin({ projectRoot: './src', verbose: false }), exampleMocking()],
+  middleware: [devtoolsPlugin({ projectRoot: './src', workspaceData: './dist', verbose: false }), exampleMocking()],
 };

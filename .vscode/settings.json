@@ -14,6 +14,7 @@
   "editor.autoIndentOnPaste": true,
   "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
   "cSpell.words": [
+    "appspecific",
     "Hofmann"
   ],
   "[javascript]": {
