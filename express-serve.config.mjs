@@ -7,13 +7,13 @@ export default {
   openPage: true,
   contentBase: ['dist', 'src'],
   port: 3000,
-  historyAPIFallback: ['/about'],
+  historyAPIFallback: { path: 'dist', routes: ['/about'] },
   verbose: true,
   traceRequests: true,
   proxy: {
     '/api': 'http://localhost:3001',
     '/config': {
-      target: 'http://localhost:3001/api/config',
+      target: 'http://localhost:3001', // http://localhost:3001/api/config'
       stripPrefix: true,
     },
   },

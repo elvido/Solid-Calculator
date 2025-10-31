@@ -1,4 +1,5 @@
 import { createServing } from './rollup-plugin-express-serve.mjs';
+import log from './express-serve-logger.mjs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { pathToFileURL } from 'url';
@@ -23,7 +24,10 @@ const argv = yargs(hideBin(process.argv))
   .option('folder', {
     alias: 'f',
     type: 'string',
-    describe: 'Static folders (comma-separated)',
+    describe: `Static folder(s) to serve.
+    - Single folder: -f public
+    - Multiple folders: -f public,assets
+    - Explicit mapping (folder:url): -f public/assets:/assets,public/docs:/docs,public/root:/`,
   })
   .option('port', {
     alias: 'p',
@@ -68,8 +72,8 @@ const argv = yargs(hideBin(process.argv))
   .alias('help', '?') // use -? for help to avoid alias clash
   .strict() // disallow unknown options
   .fail((msg, err, yargs) => {
-    console.error(`\nError: ${msg}\n`);
-    console.log(yargs.help()); // print the help text
+    log.error(`\nError: ${msg}\n`);
+    log.log(yargs.help()); // print the help text
     process.exit(1); // exit with failure
   })
   .parse();
@@ -80,7 +84,7 @@ let configPath;
 if (argv.config) {
   configPath = path.resolve(cwd, argv.config);
   if (!fs.existsSync(configPath)) {
-    console.error(`Error: Config file not found at "${configPath}"`);
+    log.error(`Error: Config file not found at "${configPath}"`);
     process.exit(1);
   }
 } else {
@@ -105,8 +109,24 @@ if (argv.open !== undefined) config.openPage = argv.open;
 if (argv.port !== undefined) config.port = argv.port;
 if (argv.host !== undefined) config.host = argv.host;
 if (argv.trace !== undefined) config.traceRequests = argv.trace;
-if (argv.folder !== undefined)
-  config.contentBase = argv.folder.includes(',') ? argv.folder.split(',').map((s) => s.trim()) : argv.folder.trim();
+if (argv.folder !== undefined) {
+  const entries = argv.folder
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean); // Split on commas
+  // If any entry contains ":", treat as mapping { dir: url }
+  if (entries.some((e) => e.includes(':'))) {
+    config.contentBase = entries.reduce((acc, entry) => {
+      const [dir, url] = entry.split(':');
+      acc[dir.trim()] = (url || '/').trim();
+      return acc;
+    }, {});
+  } else if (entries.length > 1) {
+    config.contentBase = entries; // string[]
+  } else {
+    config.contentBase = entries[0]; // string
+  }
+}
 
 // Start server
 const serving = createServing(config);

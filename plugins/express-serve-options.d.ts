@@ -7,12 +7,27 @@ import { RequestHandler } from 'express';
  */
 export interface ExpressServeOptions {
   /**
-   * Directory or directories to serve static files from.
+   * Static file configuration:
+   * - `string` → single directory mounted at "/"
+   * - `string[]` → multiple directories all mounted at "/"
+   * - `Record<dir, url>` → explicit mapping of directory → mount URL
+   *
    * @default ''
    * @example
+   * // Single directory mounted at "/"
+   * contentBase: 'public'
+   *
+   * // Multiple directories, all mounted at "/"
    * contentBase: ['public', 'assets']
+   *
+   * // Explicit mapping
+   * contentBase: {
+   *   'public/assets': '/assets',
+   *   'public/docs': '/docs',
+   *   'public/root': '/'
+   * }
    */
-  contentBase?: string | string[];
+  contentBase?: string | string[] | Record<string, string>;
 
   /**
    * Port to listen on.

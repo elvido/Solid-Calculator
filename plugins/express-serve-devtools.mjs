@@ -2,6 +2,7 @@ import express from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidV4, validate as uuidValidate } from 'uuid';
+import log from './express-serve-logger.mjs';
 
 // Chrome DevTools looks for this well-known endpoint to discover workspace info
 const ENDPOINT = '/.well-known/appspecific/com.chrome.devtools.json';
@@ -23,9 +24,9 @@ export function devtoolsPlugin(options = {}) {
   const supportWindowsContainer = options.supportWindowsContainer ?? true;
 
   // Helper logger that only prints if verbose mode is enabled
-  function log(...args) {
+  function logInfo(...args) {
     if (options.verbose) {
-      console.log('[DevToolsPlugin]', ...args);
+      log.verbose('[DevToolsPlugin]', ...args);
     }
   }
 
@@ -42,7 +43,7 @@ export function devtoolsPlugin(options = {}) {
       const relativePath = path.posix.relative('/', projectRoot);
       // Build UNC path for WSL
       const rewrittenPath = path.join('\\\\wsl.localhost', distro, relativePath).replace(/\//g, '\\');
-      log(`WSL path rewrite: ${rewrittenPath}`);
+      logInfo(`WSL path rewrite: ${rewrittenPath}`);
       return rewrittenPath;
     }
     if (supportWindowsContainer !== false && process.env.DOCKER_DESKTOP && !projectRoot.startsWith('\\\\')) {
@@ -50,7 +51,7 @@ export function devtoolsPlugin(options = {}) {
       const relativePath = path.posix.relative('/', projectRoot);
       // Build UNC path for Docker Desktop
       const rewrittenPath = path.join('\\\\wsl.localhost', 'docker-desktop-data', relativePath).replace(/\//g, '\\');
-      log(`Docker path rewrite: ${rewrittenPath}`);
+      logInfo(`Docker path rewrite: ${rewrittenPath}`);
       return rewrittenPath;
     }
     // Default: absolute path with forward slashes
@@ -81,10 +82,10 @@ export function devtoolsPlugin(options = {}) {
         const parsed = JSON.parse(raw);
         if (parsed.workspace?.uuid && parsed.workspace?.root) {
           workspace = parsed.workspace;
-          log(`Loaded workspace data from "${workspacePath}"`);
+          logInfo(`Loaded workspace data from "${workspacePath}"`);
         }
       } catch (err) {
-        log(`Failed to parse workspaceData file: ${err}`);
+        logInfo(`Failed to parse workspaceData file: ${err}`);
       }
     }
 
@@ -92,15 +93,15 @@ export function devtoolsPlugin(options = {}) {
     let uuid;
     if (options.uuid) {
       if (uuidValidate(options.uuid)) uuid = options.uuid;
-      else log(`Invalid UUID provided in options: "${options.uuid}"`);
+      else logInfo(`Invalid UUID provided in options: "${options.uuid}"`);
     }
     if (!uuid && workspace?.uuid) {
       if (uuidValidate(workspace?.uuid)) uuid = workspace?.uuid;
-      else log(`Invalid UUID found in workspace file: "${workspace.uuid}"`);
+      else logInfo(`Invalid UUID found in workspace file: "${workspace.uuid}"`);
     }
     if (!uuid) {
       uuid = uuidV4();
-      log(`Generated new UUID: "${uuid}"`);
+      logInfo(`Generated new UUID: "${uuid}"`);
     }
 
     // Determine root: prefer option → file → current working directory
@@ -114,9 +115,9 @@ export function devtoolsPlugin(options = {}) {
       try {
         fs.mkdirSync(path.dirname(workspacePath), { recursive: true });
         fs.writeFileSync(workspacePath, JSON.stringify(devtoolsJson, null, 2), 'utf-8');
-        log(`Created workspaceData file at "${workspacePath}"`);
+        logInfo(`Created workspaceData file at "${workspacePath}"`);
       } catch (err) {
-        log(`Failed to write workspaceData file: ${err}`);
+        logInfo(`Failed to write workspaceData file: ${err}`);
       }
     }
 
@@ -125,9 +126,9 @@ export function devtoolsPlugin(options = {}) {
 
   // Register GET handler for the DevTools endpoint
   router.get(ENDPOINT, (req, res) => {
-    log('Received DevTools workspace request');
+    logInfo('Received DevTools workspace request');
     const devtoolsJson = loadOrCreateWorkspaceData();
-    log('Responding with workspace descriptor:', devtoolsJson);
+    logInfo('Responding with workspace descriptor:', devtoolsJson);
     res.setHeader('x-trace-source', 'devtools');
     res.json(devtoolsJson);
   });

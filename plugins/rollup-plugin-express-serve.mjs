@@ -1,4 +1,3 @@
-// Core dependencies
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
@@ -8,15 +7,15 @@ import { createServer as createHttpsServer } from 'https';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import open from 'open';
 import morgan from 'morgan';
+import micromatch from 'micromatch';
 import chalk from 'chalk';
 import { normalizeExpressServeOptions } from './express-serve-options.mjs';
-
-let server; // Holds the active server instance for reuse or shutdown
+import log from './express-serve-logger.mjs';
 
 /**
  * Close a running server instance.
  */
-function closeServer() {
+function closeServer(server) {
   if (!server) return Promise.resolve();
 
   return new Promise((resolve, reject) => {
@@ -80,7 +79,7 @@ function createServer(options = {}) {
                 ? chalk.green.bold(status)
                 : chalk.bold(status);
 
-      return `[TRACE] ${method} ${url} → ${coloredStatus} (${source})${target ? ` → ${target}` : ''} +${time}ms : ${length} bytes`;
+      return `Trace> ${method} ${url} → ${coloredStatus} (${source})${target ? ` → ${target}` : ''} +${time}ms : ${length} bytes`;
     };
 
     const filter = options.traceRequests.filter;
@@ -88,24 +87,24 @@ function createServer(options = {}) {
     let skip = () => false;
 
     if (Array.isArray(filter) && filter.length > 0) {
-      const globToRegex = (pattern) =>
-        new RegExp(
-          '^' +
-            pattern
-              .replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&') // escape special chars
-              .replace(/\*/g, '.*') // * → .*
-              .replace(/\?/g, '.') + // ? → .
-            '$'
-        );
-      const regexFilter = filter.filter((f) => typeof f === 'string' && f.trim()).map((f) => globToRegex(f.trim()));
+      // Clean up filter patterns
+      const patterns = filter.filter((f) => typeof f === 'string' && f.trim()).map((f) => f.trim());
 
       skip = (req) => {
         const url = (req.originalUrl || req.url || '').split('?')[0];
-        return !regexFilter.some((rx) => rx.test(url));
+        // micromatch.isMatch returns true if url matches any pattern
+        return !micromatch.isMatch(url, patterns);
       };
     }
 
-    app.use(morgan(format, { skip }));
+    app.use(
+      morgan(format, {
+        skip,
+        stream: {
+          write: (msg) => log.verbose(msg.trim()),
+        },
+      })
+    );
   }
 
   // Apply custom response headers
@@ -124,13 +123,15 @@ function createServer(options = {}) {
   }
 
   // Serve static files from configured directories
-  options.contentBase.forEach((base) => {
+  Object.entries(options.contentBase).forEach(([base, mount]) => {
     app.use(
+      mount,
       express.static(path.resolve(base), {
         setHeaders: (res, filePath) => {
           const mimetype = resolveMime(filePath);
           res.setHeader('Content-Type', mimetype);
           res.setHeader('x-trace-source', 'static');
+          res.setHeader('x-trace-base', encodeURI(base));
         },
       })
     );
@@ -138,65 +139,72 @@ function createServer(options = {}) {
 
   // Setup proxy routes
   if (options.proxy) {
-    Object.entries(options.proxy).forEach(([route, config]) => {
-      const target = config.target;
-      const stripPrefix = config.stripPrefix !== false;
+    const proxyRoutes = Object.keys(options.proxy);
+    const routerMap = Object.fromEntries(Object.entries(options.proxy).map(([route, cfg]) => [route, cfg.target]));
 
-      const router = express.Router();
+    app.use(
+      createProxyMiddleware({
+        changeOrigin: true,
+        // Match only paths that start with a configured route
+        pathFilter: proxyRoutes,
+        router: routerMap,
 
-      router.use((req, res, next) => {
-        const originalPath = req.originalUrl;
-        const rewrittenPath = stripPrefix ? originalPath.replace(new RegExp(`^${route}`), '') || '/' : originalPath;
-        req.url = rewrittenPath;
+        // Rewrite path if stripPrefix is enabled
+        pathRewrite: (path, req) => {
+          const match = proxyRoutes.find(([route]) => req.originalUrl.startsWith(route));
+          if (true || match?.[1].stripPrefix === false) return '/api/config'; //path;
+        },
 
-        const fullTargetUrl = target.replace(/\/$/, '') + '/' + req.url.replace(/^\//, '');
-        res.setHeader('x-trace-source', 'proxy');
-        res.setHeader('x-trace-target', fullTargetUrl);
+        // Inject proxy headers
+        on: {
+          proxyReq: (proxyReq, req) => {
+            proxyReq.setHeader('x-forwarded-for', req.ip);
+            proxyReq.setHeader('x-forwarded-host', req.headers.host);
+            proxyReq.setHeader('x-forwarded-proto', req.protocol);
+            proxyReq.setHeader('forwarded', `for=${req.ip};proto=${req.protocol};host=${req.headers.host}`);
+          },
+          proxyRes: (proxyRes, req, res) => {
+            const match = proxyRoutes.find(([route]) => req.originalUrl.startsWith(route));
+            const rewrittenPath =
+              match?.[1].stripPrefix === false
+                ? req.originalUrl
+                : req.originalUrl.replace(new RegExp(`^${match?.[0]}`), '') || '/';
 
-        next();
-      });
-
-      router.use(
-        createProxyMiddleware({
-          target,
-          changeOrigin: true,
-        })
-      );
-
-      app.use(route, router);
-    });
+            const fullTargetUrl = req.originalUrl; //match?.[1].target.replace(/\/$/, '') + '/' + rewrittenPath.replace(/^\//, '');
+            res.setHeader('x-trace-source', 'proxy');
+            res.setHeader('x-trace-target', fullTargetUrl);
+          },
+        },
+      })
+    );
   }
 
   // SPA fallback for client-side routing
   if (options.historyAPIFallback) {
-    const fallbackPath = path.resolve(options.contentBase[0], options.historyAPIFallback.path);
+    const fallbackPath = options.historyAPIFallback.path;
+
+    // check if specified content file is accessible
+    if (!(fs.existsSync(fallbackPath) && fs.statSync(fallbackPath).isFile()))
+      log.error(`Fallback content file is not accessible: "${fallbackPath}"`);
 
     // fallback request handler
     const fallbackRequestHandler = (req, res, next) => {
-      if (req.method === 'GET') {
+      if ((req.method === 'GET' || req.method === 'HEAD') && req.accepts('html')) {
         res.setHeader('x-trace-source', 'spa-fallback');
+        res.setHeader('x-trace-base', encodeURI(fallbackPath));
         res.sendFile(fallbackPath);
-      } else {
-        next();
-      }
+      } else next();
     };
 
     if (Array.isArray(options.historyAPIFallback.routes) && options.historyAPIFallback.routes.length > 0) {
       options.historyAPIFallback.routes.forEach((route) => {
         if (typeof route === 'string') app.get(route, fallbackRequestHandler);
       });
-    } else {
-      app.use(fallbackRequestHandler);
-    }
-  }
-
-  // Gracefully close previous server if Rollup restarts
-  if (server) {
-    closeServer();
+    } else app.use(fallbackRequestHandler);
   }
 
   // Create HTTP or HTTPS server
-  server = options.https
+  const server = options.https
     ? createHttpsServer(
         {
           key: fs.readFileSync(options.https.key),
@@ -209,7 +217,7 @@ function createServer(options = {}) {
   // Handle common server errors
   server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      console.error('Endpoint is in use, either stop the other server or use a different port.');
+      log.error('Endpoint is in use, either stop the other server or use a different port.');
       process.exit();
     } else {
       throw e;
@@ -229,25 +237,29 @@ function createServer(options = {}) {
  * @param {import('./express-serve-options').ExpressServeOptions} options - Configuration options
  * @returns {import('./express-serve-controller).ExpressServeController} - Serving controller
  */
-export function createServing(options = {}) {
+export function createServing(_options = {}) {
   // Normalize options
-  options = normalizeExpressServeOptions(options);
+  const options = normalizeExpressServeOptions(_options);
+
+  let server = null;
 
   return {
-    startServing: () => {
-      createServer(options);
+    startServing: async () => {
+      // Gracefully close previous server
+      await closeServer(server);
+      server = createServer(options);
     },
 
     stopServing: async () => {
-      await closeServer();
+      await closeServer(server);
     },
 
     printPaths: () => {
       if (options.verbose !== false) {
         const protocol = options.https ? 'https' : 'http';
-        const url = `${protocol}://${options.host}:${options.port}`;
-        options.contentBase.forEach((base) => {
-          console.log(`[VERBOSE] Serving: ${chalk.green(url)} -> ${path.resolve(base)}`);
+        const baseUrl = `${protocol}://${options.host}:${options.port}`;
+        Object.entries(options.contentBase).forEach(([base, mount]) => {
+          log.verbose(`Serving: ${chalk.green(baseUrl + mount)} -> ${path.resolve(base)}`);
         });
       }
     },
@@ -259,7 +271,7 @@ export function createServing(options = {}) {
         const opening = /^https?:\/\//.test(options.openPage)
           ? options.openPage
           : url + (options.openPage.startsWith('/') ? options.openPage : '/' + options.openPage);
-        if (options.verbose != false) console.log(`[VERBOSE] Opening browser at: ${opening}`);
+        if (options.verbose != false) log.verbose(`Opening browser at: ${opening}`);
         open(opening);
       }
     },
