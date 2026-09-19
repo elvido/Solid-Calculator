@@ -13,7 +13,7 @@
     "start:dev": "concurrently -n frontend,mock -c blue,green \"yarn start:frontend\" \"yarn start:mock\"",
     "start:preview": "node ./plugins/expressServe.mjs -c express-serve.config.mjs",
     "build:preview": "yarn build:prd && yarn start:preview",
-    "test": "node --test test",
+    "test": "tsx --test test",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
@@ -100,6 +100,7 @@
   "homepage": "https://github.com/elvido/Solid-Calculator#readme",
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "@types/micromatch": "^4"
+    "@types/micromatch": "^4",
+    "tsx": "^4.23.13"
   }
 }

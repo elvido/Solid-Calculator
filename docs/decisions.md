@@ -52,6 +52,6 @@ making the mock server responsible for production data.
 ## Why the calculator logic is separate
 
 Expression evaluation, formatting, and digit limits do not need SolidJS or a
-browser. Keeping them in `src/calculator-logic.mjs` makes the behavior easy to
+browser. Keeping them in `src/calculations.ts` makes the behavior easy to
 test and gives learners a clear example of separating domain logic from UI
 state.

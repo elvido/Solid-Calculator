@@ -35,7 +35,7 @@ Start with these files in order:
 1. `src/index.tsx` — mounts the SolidJS application.
 2. `src/app.tsx` — defines the client-side routes.
 3. `src/calculator.tsx` — combines signals, events, API calls, and markup.
-4. `src/calculator-logic.mjs` — contains UI-independent calculator behavior.
+4. `src/calculations.ts` — contains UI-independent calculator behavior.
 5. `src/index.css` — contains Tailwind, DaisyUI, and local styles.
 
 Suggested exercise: add a calculator history panel. Keep the state in the
@@ -83,7 +83,7 @@ Suggested exercise: add an asset under `assets/`, confirm that it is copied to
 
 The tests demonstrate two useful boundaries:
 
-- `test/calculator-logic.test.mjs` tests pure behavior without a browser.
+- `test/calculations.test.ts` tests pure behavior without a browser.
 - `test/mock-api.test.mjs` starts the Express app on an ephemeral port.
 - `test/proxy-utils.test.mjs` tests route rewriting without opening a server.
 - `test/logger.test.mjs` tests logging behavior without depending on console UI.

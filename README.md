@@ -63,7 +63,10 @@ yarn build:dev is a watch command and stays running. For a one-shot production-l
 5. Run yarn format:check and yarn build:prd before committing.
 6. Manually smoke-test the calculator and the /about route at http://localhost:3000.
 
-Run yarn test for the automated unit tests. The production build also runs TypeScript, ESLint, Babel, PostCSS, and Rollup, so it remains the main build validation step.
+Run yarn test for the automated unit and integration tests. It uses `tsx` so
+the suite can execute both TypeScript and JavaScript test files. The production
+build also runs TypeScript, ESLint, Babel, PostCSS, and Rollup, so it remains
+the main build validation step.
 
 Browser tests use Playwright. Install its local Chromium binary once with
 `yarn test:e2e:install`, then run `yarn test:e2e`. The browser test command
@@ -76,6 +79,7 @@ src/
   index.tsx       SolidJS entry point; mounts App into #root
   app.tsx         Client-side routes: / and /about
   calculator.tsx  Calculator state, operations, theme, and API calls
+  calculations.ts Pure calculator operations and formatting
   about.tsx       About page
   index.css       Tailwind/DaisyUI imports and calculator button styles
 
@@ -203,7 +207,7 @@ Available project scripts are:
 | yarn build:dev      | Run Rollup in watch mode                                                                |
 | yarn build:prd      | Create a clean minified production build                                                |
 | yarn build:preview  | Create a production build and serve it through the standalone preview server |
-| yarn test            | Run the Node.js unit tests |
+| yarn test            | Run TypeScript and JavaScript unit/integration tests                         |
 | yarn typecheck       | Type-check the frontend without emitting files                                  |
 | yarn test:e2e        | Run Playwright browser tests                                                    |
 | yarn test:e2e:install | Install the Chromium binary used by browser tests                               |
@@ -213,7 +217,7 @@ Available project scripts are:
 
 ## Current limitations and follow-up work
 
-- Browser-level end-to-end tests are not configured yet; proxy and logger behavior has unit coverage.
+- Browser-level tests cover calculator input, operator precedence, theme switching, and error handling; broader end-to-end coverage can be added as the application grows.
 - Mock configuration is process-local and resets on restart.
 - The project should be kept locally available when stored in OneDrive; online-only dependency files can cause Node read timeouts.
 

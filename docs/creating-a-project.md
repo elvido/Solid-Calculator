@@ -24,7 +24,7 @@ proxy routes.
 
 1. Create your page and components under `src/`.
 2. Replace the routes in `src/app.tsx`.
-3. Remove or rename `src/calculator.tsx` and `src/calculator-logic.mjs`.
+3. Remove or rename `src/calculator.tsx` and `src/calculations.ts`.
 4. Replace the calculator-specific styles in `src/index.css`.
 5. Update the browser request paths and API routes.
 

@@ -1,6 +1,6 @@
 import { createSignal, onCleanup, onMount } from 'solid-js';
 import './index.css';
-import { applyDigitLimit, evaluateExpression, formatResult } from './calculator-logic.mjs';
+import { applyDigitLimit, evaluateExpression, formatResult } from './calculations';
 
 type Operator = '+' | '-' | '*' | '/';
 

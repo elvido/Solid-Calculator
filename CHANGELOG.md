@@ -12,6 +12,7 @@
 - **ADDED**: Node unit tests for proxy rewriting and scoped logger behavior
 - **ADDED**: Reusable-template documentation, environment configuration, CI, API integration tests, and Playwright browser tests
 - **IMPROVED**: Separated calculator logic from the UI and made the mock API independently testable
+- **IMPROVED**: Simplified calculator behavior into the typed `src/calculations.ts` module and TypeScript test suite
 - **FIXED**: Production preview now builds once before starting the standalone server
 - **IMPROVED**: Modularization of development server setup
   - Extracted Express server logic into reusable `createServing()` utility

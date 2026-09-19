@@ -177,7 +177,7 @@ server in one command.
 - Mock configuration is held in memory and resets when the mock API restarts.
 - The `/log` endpoint is an in-memory development audit route, not a durable
   audit system.
-- Browser-level end-to-end tests are not configured yet; proxy and logger unit
-  tests cover the main server helpers.
+- Browser tests cover the main calculator interactions; additional end-to-end
+  coverage can be added as the application grows.
 - When the repository is stored in OneDrive, project and dependency files must
   be available locally; online-only files can cause Node.js read timeouts.

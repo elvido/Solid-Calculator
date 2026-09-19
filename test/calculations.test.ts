@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyDigitLimit, evaluateExpression, formatResult } from '../src/calculator-logic.mjs';
+import { applyDigitLimit, evaluateExpression, formatResult } from '../src/calculations';
 
 test('calculator applies multiplication before addition', () => {
   assert.equal(evaluateExpression(['2', '+', '3', '*', '4']), 14);

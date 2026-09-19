@@ -14,7 +14,11 @@ test('calculator handles keyboard input and operator precedence', async ({ page 
 });
 
 test('calculator supports theme switching and visible errors', async ({ page }) => {
+  const configLoaded = page.waitForResponse(
+    (response) => response.url().includes('/config') && response.request().method() === 'GET'
+  );
   await page.goto('/');
+  await configLoaded;
 
   const themeButton = page.getByRole('button', { name: /Dark|Light/ });
   await expect(themeButton).toBeVisible();
@@ -34,6 +38,10 @@ test('calculator supports theme switching and visible errors', async ({ page }) 
 
   await expect(page.locator('[aria-live="polite"]')).toHaveText('Error');
 
+  const configSaved = page.waitForResponse(
+    (response) => response.url().includes('/config') && response.request().method() === 'POST'
+  );
   await themeButton.click();
+  await configSaved;
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
