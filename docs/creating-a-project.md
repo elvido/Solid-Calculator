@@ -11,10 +11,10 @@ These pieces are intended to be reusable:
 - `rollup.config*.mjs`
 - `plugins/rollup-plugin-express-serve.mjs`
 - `plugins/expressServe.mjs`
-- `plugins/proxy-utils.mjs`
+- `plugins/proxy-path.mjs`
 - `plugins/request-context.mjs`
 - `plugins/express-serve-logger.*`
-- `mock-server/app.mjs` as a starting point for a replaceable API
+- `mock-server/api-app.mjs` as a starting point for a replaceable API
 - `Solid-Calculator.code-workspace` as a starting point for VS Code settings
 
 Read [ARCHITECTURE.md](../ARCHITECTURE.md) before changing middleware order or
@@ -34,7 +34,7 @@ replace, not a required part of the server template.
 ## Replace the mock API
 
 1. Add route modules under `mock-server/routes/`.
-2. Mount them in `mock-server/app.mjs`.
+2. Mount them in `mock-server/api-app.mjs`.
 3. Update `express-serve.config.mjs` when browser paths and backend paths differ.
 4. Keep `plugins/example-mocking-plugin.mjs` only for lightweight frontend
    server examples.
@@ -55,7 +55,8 @@ together.
 ```bash
 yarn install --immutable
 yarn check
+yarn test:preview
 ```
 
-Also start the application with `yarn start:dev`, test the main browser route,
+Also start the application with `yarn dev`, test the main browser route,
 and verify at least one API request through the configured proxy.

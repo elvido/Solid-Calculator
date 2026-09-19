@@ -12,6 +12,18 @@ export default [
   },
   js.configs.recommended,
   {
+    files: ['*.mjs', 'plugins/**/*.mjs', 'mock-server/**/*.mjs', 'test/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        fetch: 'readonly',
+        process: 'readonly',
+        setImmediate: 'readonly',
+        setTimeout: 'readonly',
+      },
+    },
+  },
+  {
     files: ['src/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,

@@ -13,6 +13,14 @@
 - **ADDED**: Reusable-template documentation, environment configuration, CI, API integration tests, and Playwright browser tests
 - **IMPROVED**: Separated calculator logic from the UI and made the mock API independently testable
 - **IMPROVED**: Simplified calculator behavior into the typed `src/calculations.ts` module and TypeScript test suite
+- **IMPROVED**: Structured Yarn scripts into development, preview, test, check, and format namespaces
+- **IMPROVED**: Added a standalone `yarn lint` command and included linting in `yarn check`
+- **IMPROVED**: Split Node tests into explicit unit and integration commands
+- **CHORE**: Removed unused `MOCK` and `MOCK_MODE` environment variables and their `cross-env` dependency
+- **FIXED**: Mock status responses now expose only allowlisted environment metadata while retaining the working directory
+- **FIXED**: Production builds no longer emit stale browser-data, Tailwind Node deprecation, or Rollup sourcemap warnings
+- **IMPROVED**: Isolated mock API configuration state per app instance and reset browser-test state before each test
+- **ADDED**: Production-preview smoke tests for built pages and proxied API routes
 - **FIXED**: Production preview now builds once before starting the standalone server
 - **IMPROVED**: Modularization of development server setup
   - Extracted Express server logic into reusable `createServing()` utility

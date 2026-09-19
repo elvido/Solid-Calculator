@@ -54,21 +54,23 @@ const transformSourcePath = (relativeSourcePath, sourcemapPath) => {
   return normalizedPath;
 };
 
-export default {
+// Keep Rollup and every transforming plugin aligned so production builds can
+// disable source maps without triggering plugin configuration warnings.
+export const createBaseConfig = ({ sourceMap = true } = {}) => ({
   input: 'src/index.tsx',
   output: {
     dir: 'dist',
     format: 'es',
     entryFileNames: 'app.js',
     assetFileNames: '[name][extname]',
-    sourcemap: true,
+    sourcemap: sourceMap,
     sourcemapPathTransform: transformSourcePath,
   },
   plugins: [
     resolve({
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
     }),
-    typescript(),
+    typescript({ sourceMap }),
     eslint({
       include: ['src/**/*.ts', 'src/**/*.tsx', 'src/**/*.js', 'src/**/*.jsx'],
       throwOnError: true,
@@ -78,13 +80,13 @@ export default {
       presets: ['babel-preset-solid'],
       babelHelpers: 'bundled',
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
-      sourceMaps: true,
+      sourceMaps: sourceMap,
     }),
     postcss({
       ...postcssConfig,
       extract: 'app.css',
       minimize: true,
-      sourceMap: true,
+      sourceMap,
     }),
     copy({
       targets: [{ src: 'assets/*.*', dest: 'dist' }],
@@ -93,7 +95,7 @@ export default {
     }),
     html({
       title: 'Solid Calculator',
-      template: ({ attributes, files, meta, publicPath, title }) => {
+      template: ({ files, publicPath, title }) => {
         const scripts = (files.js || [])
           .map(({ fileName }) => `<script type="module" src="${publicPath}${fileName}"></script>`)
           .join('\n');
@@ -109,4 +111,6 @@ export default {
     include: ['src/**', 'assets/**'],
     exclude: ['dist/**', 'node_modules/**'],
   },
-};
+});
+
+export default createBaseConfig();

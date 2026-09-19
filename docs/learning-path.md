@@ -12,7 +12,7 @@ From the repository root:
 ```bash
 corepack enable
 yarn install
-yarn start:dev
+yarn dev
 ```
 
 Open `http://localhost:3000` and try the calculator, the `/about` page, and the
@@ -20,13 +20,19 @@ theme toggle. Then run the checks in a second terminal:
 
 ```bash
 yarn format:check
-yarn typecheck
-yarn test
+yarn lint
+yarn check:types
+yarn test:unit
+yarn test:integration
 yarn build:prd
+yarn test:preview
 ```
 
-Read [ARCHITECTURE.md](../ARCHITECTURE.md) before changing the server. It
-explains which process owns each request.
+The unit tests are isolated and fast; the integration tests start HTTP servers
+to verify the mock API and proxy boundary. The preview smoke test then checks
+the built application shell, SPA fallback, and production proxy wiring. Read
+[ARCHITECTURE.md](../ARCHITECTURE.md) before changing the server. It explains
+which process owns each request.
 
 ## 2. Learn the frontend
 
@@ -49,11 +55,15 @@ Follow the configuration request:
 1. `src/calculator.tsx` requests `/config`.
 2. The frontend server matches `/config` in `express-serve.config.mjs`.
 3. The proxy rewrites it to `/api/config` and forwards it to port 3001.
-4. `mock-server/app.mjs` mounts `mock-server/routes/config.mjs`.
+4. `mock-server/api-app.mjs` mounts `mock-server/routes/config.mjs`.
 5. The response returns through the proxy with the same request ID.
 
+The mock route receives its state from `createMockApp()`. Separate app
+instances therefore remain independent, which is useful for tests and makes
+the persistence boundary explicit.
+
 Suggested exercise: add `GET /api/history` to `mock-server/routes/`, mount it
-in `mock-server/app.mjs`, and display the result on a new SolidJS route.
+in `mock-server/api-app.mjs`, and display the result on a new SolidJS route.
 
 ## 4. Learn Express middleware and logging
 
@@ -77,7 +87,7 @@ Compare `rollup.config.dev.mjs` and `rollup.config.prd.mjs`:
 - Production removes the old `dist/` directory and emits minified assets.
 
 Suggested exercise: add an asset under `assets/`, confirm that it is copied to
-`dist/`, and then inspect the production output with `yarn build:preview`.
+`dist/`, and then inspect the production output with `yarn preview`.
 
 ## 6. Learn testing and extension points
 
@@ -85,7 +95,7 @@ The tests demonstrate two useful boundaries:
 
 - `test/calculations.test.ts` tests pure behavior without a browser.
 - `test/mock-api.test.mjs` starts the Express app on an ephemeral port.
-- `test/proxy-utils.test.mjs` tests route rewriting without opening a server.
+- `test/proxy-path.test.mjs` tests route rewriting without opening a server.
 - `test/logger.test.mjs` tests logging behavior without depending on console UI.
 
 When adding a feature, prefer this order:

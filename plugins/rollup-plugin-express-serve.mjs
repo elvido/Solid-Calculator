@@ -12,7 +12,7 @@ import chalk from 'chalk';
 import { normalizeExpressServeOptions } from './express-serve-options.mjs';
 import log from './express-serve-logger.mjs';
 import { requestContext } from './request-context.mjs';
-import { rewriteProxyPath } from './proxy-utils.mjs';
+import { rewriteProxyPath } from './proxy-path.mjs';
 
 /**
  * Close a running server instance.

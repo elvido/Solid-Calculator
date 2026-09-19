@@ -44,7 +44,7 @@ flowchart LR
 | `rollup.config.prd.mjs` | Clean, minified production build without source maps |
 | `plugins/rollup-plugin-express-serve.mjs` | Reusable Express server, static files, proxying, SPA fallback, tracing, and middleware registration |
 | `plugins/expressServe.mjs` | Standalone CLI for serving an existing build |
-| `plugins/proxy-utils.mjs` | Route matching and proxy path rewriting |
+| `plugins/proxy-path.mjs` | Route matching and proxy path rewriting |
 | `plugins/request-context.mjs` | Request IDs, response headers, and request-scoped loggers |
 | `plugins/express-serve-logger.mjs` | Shared Winston/fallback logger, log levels, context metadata, and file output |
 | `mock-server/` | Development-only API server and route modules |
@@ -53,7 +53,7 @@ flowchart LR
 
 ## Development startup
 
-`yarn start:dev` uses `concurrently` to start the frontend watch process and
+`yarn dev` uses `concurrently` to start the frontend watch process and
 the mock API process. Rollup rebuilds the browser bundle into `dist/`; the
 Express plugin serves that output and `src/`, while livereload refreshes the
 browser after a build.
@@ -67,9 +67,9 @@ sequenceDiagram
     participant Mock as Mock API :3001
     participant Browser as Browser
 
-    Dev->>Concurrent: yarn start:dev
-    Concurrent->>Rollup: yarn start:frontend
-    Concurrent->>Mock: yarn start:mock
+    Dev->>Concurrent: yarn dev
+    Concurrent->>Rollup: yarn dev:frontend
+    Concurrent->>Mock: yarn dev:mock
     Rollup->>Frontend: create/update dist/
     Frontend-->>Browser: serve application and live reload
     Browser->>Frontend: load /
@@ -138,7 +138,7 @@ JSON Lines with ANSI control sequences removed. `LOG_LEVEL` sets the default
 minimum level, for example:
 
 ```bash
-LOG_LEVEL=debug yarn start:dev
+LOG_LEVEL=debug yarn dev
 ```
 
 ## Build and preview flows
@@ -152,32 +152,38 @@ flowchart LR
     Source[src/ and assets/] --> DevBuild[yarn build:dev\nRollup watch]
     Source --> ProdBuild[yarn build:prd\nminified output]
     DevBuild --> DevServer[Express :3000\nwatch development server]
-    ProdBuild --> Preview[yarn start:preview\nstandalone Express server]
+    ProdBuild --> Preview[yarn preview:serve\nstandalone Express server]
     Preview --> Built[dist/]
 ```
 
-`yarn build:preview` combines the production build and standalone preview
+`yarn preview` combines the production build and standalone preview
 server in one command.
+
+`yarn test:preview` starts the same serving utility against the generated
+`dist/` directory and verifies the application shell, `/about` fallback, and
+the configured API proxy routes.
 
 ## Extension points
 
 - Add client pages under `src/` and register them in `src/app.tsx`.
 - Add persistent mock API routes under `mock-server/routes/` and mount them in
-  `mock-server/index.mjs`.
+  `mock-server/api-app.mjs`.
 - Add lightweight frontend-server mock routes in
   `plugins/example-mocking-plugin.mjs`.
 - Add or change backend targets in `express-serve.config.mjs`.
-- Keep proxy path behavior in `plugins/proxy-utils.mjs` so it can be tested
+- Keep proxy path behavior in `plugins/proxy-path.mjs` so it can be tested
   independently from the Express server.
 - Update the relevant README, plugin reference, changelog, or TODO entry when
   behavior changes.
 
 ## Known boundaries
 
-- Mock configuration is held in memory and resets when the mock API restarts.
+- Mock configuration is held in an app-owned in-memory state object. Each
+  `createMockApp()` call receives a fresh state by default, which isolates
+  tests; the standalone mock API still resets the state when it restarts.
 - The `/log` endpoint is an in-memory development audit route, not a durable
   audit system.
-- Browser tests cover the main calculator interactions; additional end-to-end
+- Browser tests cover the main calculator interactions; additional browser
   coverage can be added as the application grows.
 - When the repository is stored in OneDrive, project and dependency files must
   be available locally; online-only files can cause Node.js read timeouts.

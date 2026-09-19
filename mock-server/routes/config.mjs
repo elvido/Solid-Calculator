@@ -1,29 +1,40 @@
 import { Router } from 'express';
 
-const router = Router();
+/**
+ * Creates isolated state for one mock API application instance.
+ *
+ * Keeping state outside the router module prevents tests from sharing data
+ * accidentally and makes it straightforward to replace this object with a
+ * persistence adapter later.
+ */
+export function createConfigState(initialState = {}) {
+  return {
+    theme: 'light',
+    ...initialState,
+  };
+}
 
-// In-memory mock config
-const config = {
-  theme: 'light',
-  // You can add more settings here later
-};
+/**
+ * Creates the configuration routes for a specific state object.
+ * @param {ReturnType<typeof createConfigState>} config
+ */
+export default function createConfigRoute(config = createConfigState()) {
+  const router = Router();
 
-// GET full config
-router.get('/', (req, res) => {
-  res.json(config);
-});
+  router.get('/', (req, res) => {
+    res.json(config);
+  });
 
-// POST to update config (partial updates allowed)
-router.post('/', (req, res) => {
-  const updates = req.body;
+  router.post('/', (req, res) => {
+    const updates = req.body;
 
-  // Optional: validate known keys
-  if ('theme' in updates && !['light', 'dark'].includes(updates.theme)) {
-    return res.status(400).json({ error: 'Invalid theme value' });
-  }
+    if ('theme' in updates && !['light', 'dark'].includes(updates.theme)) {
+      return res.status(400).json({ error: 'Invalid theme value' });
+    }
 
-  Object.assign(config, updates);
-  res.status(200).json({ message: 'Config updated', config });
-});
+    Object.assign(config, updates);
+    res.status(200).json({ message: 'Config updated', config });
+  });
 
-export default router;
+  return router;
+}

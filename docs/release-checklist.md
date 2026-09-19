@@ -21,10 +21,13 @@ version from the template.
 
 ```bash
 yarn install --immutable
+yarn test:unit
+yarn test:integration
 yarn check
-yarn test:e2e:install
-yarn test:e2e
-yarn build:preview
+yarn test:preview
+yarn test:browser:install
+yarn test:browser
+yarn preview
 ```
 
 Smoke-test the production preview in a browser, including the main route,

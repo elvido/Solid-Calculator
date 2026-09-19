@@ -145,6 +145,7 @@ const loggingLevels = {
 };
 
 // Matches ANSI/ECMA-48 terminal control sequences so log files contain plain text.
+// eslint-disable-next-line no-control-regex -- the control character is the sequence being removed.
 const ansiPattern = /\u001b\[[0-?]*[ -/]*[@-~]/g;
 
 function stringifyLogValue(value) {

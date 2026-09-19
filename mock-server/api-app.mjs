@@ -2,14 +2,14 @@ import express from 'express';
 import morgan from 'morgan';
 import log from './logger.mjs';
 import statusRoute from './routes/status.mjs';
-import configRoute from './routes/config.mjs';
+import createConfigRoute, { createConfigState } from './routes/config.mjs';
 import { requestContext } from '../plugins/request-context.mjs';
 
 /**
  * Creates the development mock API without binding a network port.
  * Keeping app creation separate makes the API easy to test and replace.
  */
-export function createMockApp() {
+export function createMockApp({ configState = createConfigState() } = {}) {
   const app = express();
 
   app.use(requestContext());
@@ -34,7 +34,7 @@ export function createMockApp() {
 
   app.use(express.json());
   app.use('/api/status', statusRoute);
-  app.use('/api/config', configRoute);
+  app.use('/api/config', createConfigRoute(configState));
 
   app.use((error, req, res, next) => {
     if (res.headersSent) return next(error);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { rewriteProxyPath } from '../plugins/proxy-utils.mjs';
+import { rewriteProxyPath } from '../plugins/proxy-path.mjs';
 
 test('preserves a proxied path when prefix stripping is disabled', () => {
   assert.equal(

@@ -3,17 +3,19 @@ import os from 'os';
 import process from 'process';
 
 const router = Router();
+const safeEnvironmentKeys = ['NODE_ENV', 'FRONTEND_HOST', 'FRONTEND_PORT', 'MOCK_HOST', 'MOCK_PORT', 'LOG_LEVEL'];
+
+function getSafeEnvironment(environment) {
+  return Object.fromEntries(
+    safeEnvironmentKeys
+      .filter((key) => Object.prototype.hasOwnProperty.call(environment, key))
+      .map((key) => [key, environment[key]])
+  );
+}
 
 router.get('/', (req, res) => {
   const memoryUsage = process.memoryUsage();
   const cpus = os.cpus();
-
-  // Filter and sort environment variables for clarity
-  const envVars = Object.fromEntries(
-    Object.entries(process.env)
-      .filter(([key]) => !key.toLowerCase().includes('password') && !key.toLowerCase().includes('secret'))
-      .sort(([a], [b]) => a.localeCompare(b))
-  );
 
   res.json({
     system: 'online',
@@ -34,7 +36,7 @@ router.get('/', (req, res) => {
       heapTotalMB: Math.round(memoryUsage.heapTotal / 1024 / 1024),
     },
     cwd: process.cwd(),
-    environment: envVars,
+    environment: getSafeEnvironment(process.env),
   });
 });
 

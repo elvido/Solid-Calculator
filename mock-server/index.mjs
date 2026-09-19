@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import log from './logger.mjs';
-import app from './app.mjs';
+import app from './api-app.mjs';
 
 const configuredPort = Number(process.env.MOCK_PORT ?? 3001);
 if (!Number.isInteger(configuredPort) || configuredPort < 0 || configuredPort > 65535) {

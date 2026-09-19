@@ -103,9 +103,6 @@
           "plugins/expressServe.mjs"
         ],
         "cwd": "${workspaceFolder}",
-        "env": {
-          "MOCK": "development"
-        },
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen"
       },
@@ -124,9 +121,6 @@
           "mock-server/index.mjs"
         ],
         "cwd": "${workspaceFolder}",
-        "env": {
-          "MOCK": "development"
-        },
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen"
       },
@@ -179,11 +173,11 @@
         "problemMatcher": []
       },
       {
-        "label": "Format: Update",
+        "label": "Format",
         "type": "shell",
         "command": "yarn",
         "args": [
-          "format:update"
+          "format"
         ],
         "group": {
           "kind": "build"
@@ -196,11 +190,28 @@
         "problemMatcher": []
       },
       {
-        "label": "Start: Dev",
+        "label": "Lint",
         "type": "shell",
         "command": "yarn",
         "args": [
-          "start:dev"
+          "lint"
+        ],
+        "group": {
+          "kind": "test"
+        },
+        "presentation": {
+          "panel": "shared",
+          "focus": false,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Dev: All",
+        "type": "shell",
+        "command": "yarn",
+        "args": [
+          "dev"
         ],
         "group": {
           "kind": "test"

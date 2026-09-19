@@ -24,15 +24,15 @@ The repository includes yarn.lock; keep it in sync when changing dependencies.
 The normal development command starts both processes required by the application:
 
 ~~~bash
-yarn start:dev
+yarn dev
 ~~~
 
 This runs:
 
 | Process  | Command             | Purpose                                                                         | Port |
 | -------- | ------------------- | ------------------------------------------------------------------------------- | ---- |
-| Frontend | yarn start:frontend | Rollup watch build, Express static server, SPA fallback, proxy, and live reload | 3000 |
-| Mock API | yarn start:mock     | Nodemon-watched Express mock server                                             | 3001 |
+| Frontend | yarn dev:frontend | Rollup watch build, Express static server, SPA fallback, proxy, and live reload | 3000 |
+| Mock API | yarn dev:mock     | Nodemon-watched Express mock server                                             | 3001 |
 
 Open [http://localhost:3000](http://localhost:3000). The frontend server opens the browser automatically when the development build is ready.
 
@@ -40,36 +40,38 @@ Useful alternatives:
 
 ~~~bash
 # Run only the frontend watcher and development server
-yarn build:dev
+yarn dev:frontend
 
 # Run only the mock API
-yarn start:mock
+yarn dev:mock
 
 # Create a one-shot production build in dist/
 yarn build:prd
 
 # Serve an already-built dist/ directory with the standalone server
-yarn start:preview
+yarn preview:serve
 ~~~
 
-yarn build:dev is a watch command and stays running. For a one-shot production-like preview, use yarn build:preview; it runs the production build and then starts the standalone preview server.
+yarn build:dev is a watch command and stays running. For a one-shot production-like preview, use yarn preview; it runs the production build and then starts the standalone preview server.
 
 ## Common development workflow
 
-1. Start yarn start:dev from the repository root.
+1. Start yarn dev from the repository root.
 2. Change frontend code in src/; Rollup rebuilds dist/ and the browser reloads.
 3. Change mock-server code or routes; Nodemon restarts the mock API.
-4. Format changes with yarn format:update.
-5. Run yarn format:check and yarn build:prd before committing.
+4. Format changes with yarn format.
+5. Run yarn format:check, yarn lint, and yarn build:prd before committing.
 6. Manually smoke-test the calculator and the /about route at http://localhost:3000.
 
-Run yarn test for the automated unit and integration tests. It uses `tsx` so
-the suite can execute both TypeScript and JavaScript test files. The production
-build also runs TypeScript, ESLint, Babel, PostCSS, and Rollup, so it remains
-the main build validation step.
+Run `yarn test:unit` for fast, isolated calculations, logger, and proxy-path
+tests. Run `yarn test:integration` for tests that start HTTP servers. The
+combined `yarn test:node` command runs both Node test layers. The suite uses
+`tsx` so it can execute both TypeScript and JavaScript test files. The
+production build also runs TypeScript, ESLint, Babel, PostCSS, and Rollup, so
+it remains the main build validation step.
 
 Browser tests use Playwright. Install its local Chromium binary once with
-`yarn test:e2e:install`, then run `yarn test:e2e`. The browser test command
+`yarn test:browser:install`, then run `yarn test:browser`. The browser test command
 starts both development processes automatically.
 
 ## How the application is structured
@@ -85,13 +87,13 @@ src/
 
 mock-server/
   index.mjs       Express mock API on port 3001
-  routes/config.mjs  In-memory theme configuration API
+  routes/config.mjs  Factory-backed in-memory theme configuration API
   routes/status.mjs  Runtime/system status endpoint
   logger.mjs       Shared logger adapter
 
 plugins/
   rollup-plugin-express-serve.mjs  Express server and proxy implementation
-  proxy-utils.mjs                  Proxy path rewrite helpers
+  proxy-path.mjs                   Proxy path rewrite helpers
   request-context.mjs              Request IDs and scoped request logger
   expressServe.mjs                 Standalone server CLI
   express-serve-devtools.mjs       Chrome DevTools workspace middleware
@@ -132,14 +134,16 @@ For reusable visual changes, edit src/index.css. Tailwind and DaisyUI are proces
 
 During development, the browser talks to port 3000. The development server then handles requests as follows:
 
-| Browser request | Development behavior                                                 | Mock endpoint               |
-| --------------- | -------------------------------------------------------------------- | --------------------------- |
-| GET /config     | Proxied to port 3001 with an explicit rewrite to the API route     | GET /api/config             |
-| POST /config    | Same proxy as above                                                  | POST /api/config            |
-| GET /api/status | Proxied to port 3001                                                 | GET /api/status             |
-| POST /log       | Handled by inline example middleware on port 3000                    | In-memory console audit log |
+| Browser request | Development behavior                                           | Mock endpoint               |
+| --------------- | -------------------------------------------------------------- | --------------------------- |
+| GET /config     | Proxied to port 3001 with an explicit rewrite to the API route | GET /api/config             |
+| POST /config    | Same proxy as above                                            | POST /api/config            |
+| GET /api/status | Proxied to port 3001                                           | GET /api/status             |
+| POST /log       | Handled by inline example middleware on port 3000              | In-memory console audit log |
 
-The configuration route stores its data in memory:
+The configuration route stores its data in memory. Each mock API application
+instance receives a fresh configuration state, which keeps tests isolated and
+resets the example configuration whenever the mock server restarts:
 
 ~~~bash
 curl http://localhost:3001/api/config
@@ -151,7 +155,7 @@ curl http://localhost:3001/api/status
 
 The mock server starts with { "theme": "light" }, so changes are lost when it restarts. The /log endpoint also logs only to the development process; it does not write an audit file or database.
 
-To add a persistent mock route, create a router in mock-server/routes/ and mount it from mock-server/index.mjs. To add a lightweight inline route that belongs to the frontend development server, extend plugins/example-mocking-plugin.mjs and keep it in the middleware array in express-serve.config.mjs.
+To add a persistent mock route, create a router in mock-server/routes/ and mount it from mock-server/api-app.mjs. To add a lightweight inline route that belongs to the frontend development server, extend plugins/example-mocking-plugin.mjs and keep it in the middleware array in express-serve.config.mjs.
 
 Every development-server and mock-server request receives an x-request-id response header. The same ID is forwarded through proxy requests, and route handlers can use req.log for context-aware logging:
 
@@ -162,7 +166,7 @@ req.log.info('User loaded', { userId: 'demo-user' });
 The logger accepts LOG_LEVEL values error, warn, verbose, info, and debug. For example:
 
 ~~~bash
-LOG_LEVEL=debug yarn start:dev
+LOG_LEVEL=debug yarn dev
 ~~~
 
 For a reusable project, copy `.env.example` to `.env` and change `FRONTEND_PORT`,
@@ -194,31 +198,38 @@ More complete option references are available in [plugins/expressServe.md](plugi
 1. Edit package.json with Yarn.
 2. Run yarn install so yarn.lock is updated.
 3. Use the dependency from the appropriate source/config file.
-4. Run yarn format:check and yarn build:prd.
+4. Run yarn format:check, yarn lint, and yarn build:prd.
 
 Available project scripts are:
 
-| Script              | Description                                                                             |
-| ------------------- | --------------------------------------------------------------------------------------- |
-| yarn start:dev      | Run frontend watch mode and mock API concurrently                                       |
-| yarn start:frontend | Start the frontend watch mode                                                           |
-| yarn start:mock     | Start the Nodemon-watched mock API                                                      |
-| yarn start:preview  | Serve the existing build through the standalone server                                  |
-| yarn build:dev      | Run Rollup in watch mode                                                                |
-| yarn build:prd      | Create a clean minified production build                                                |
-| yarn build:preview  | Create a production build and serve it through the standalone preview server |
-| yarn test            | Run TypeScript and JavaScript unit/integration tests                         |
-| yarn typecheck       | Type-check the frontend without emitting files                                  |
-| yarn test:e2e        | Run Playwright browser tests                                                    |
-| yarn test:e2e:install | Install the Chromium binary used by browser tests                               |
-| yarn check           | Run formatting, type-checking, unit tests, and the production build             |
-| yarn format:update  | Format repository files with Prettier                                                   |
-| yarn format:check   | Check formatting without modifying files                                                |
+| Script                | Description                                                                  |
+| --------------------- | ---------------------------------------------------------------------------- |
+| yarn dev              | Run frontend watch mode and mock API concurrently                            |
+| yarn dev:frontend     | Start the frontend watch mode                                                |
+| yarn dev:mock         | Start the Nodemon-watched mock API                                           |
+| yarn preview:serve    | Serve the existing build through the standalone server                       |
+| yarn build:dev        | Run Rollup in watch mode                                                     |
+| yarn build:prd        | Create a clean minified production build                                     |
+| yarn preview          | Create a production build and serve it through the standalone preview server |
+| yarn test:unit        | Run isolated calculations, logger, and proxy-path tests                      |
+| yarn test:integration | Run mock API and live proxy integration tests                                |
+| yarn test:node        | Run both Node.js test layers                                                 |
+| yarn test:preview     | Smoke-test the built production server and proxied API routes               |
+| yarn test:browser     | Run Playwright browser tests                                                 |
+| yarn test:browser:install | Install the Chromium binary used by browser tests                        |
+| yarn test             | Run the complete Node and browser test suites                                |
+| yarn lint             | Run ESLint independently on the repository                                  |
+| yarn check:types      | Type-check the frontend without emitting files                              |
+| yarn check            | Run formatting, linting, type-checking, Node tests, and the production build |
+| yarn format           | Format repository files with Prettier                                        |
+| yarn format:check     | Check formatting without modifying files                                     |
 
 ## Current limitations and follow-up work
 
-- Browser-level tests cover calculator input, operator precedence, theme switching, and error handling; broader end-to-end coverage can be added as the application grows.
-- Mock configuration is process-local and resets on restart.
+- Browser-level tests cover calculator input, operator precedence, theme switching, and error handling; broader browser coverage can be added as the application grows.
+- Mock configuration is process-local; each app instance starts with a fresh
+  state and the standalone mock server resets it on restart.
+- `yarn test:preview` expects `dist/` to exist; run `yarn build:prd` first.
 - The project should be kept locally available when stored in OneDrive; online-only dependency files can cause Node read timeouts.
 
 ## Documentation map

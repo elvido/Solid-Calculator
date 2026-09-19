@@ -12,7 +12,13 @@ The main proxy and logger backlog has been implemented. Remaining work is tracke
 - [x] Add request-scoped logging through req.log.
 - [x] Add logger and proxy unit tests.
 - [x] Add LOG_LEVEL environment configuration.
-- [x] Fix build:preview to use a one-shot production build.
+- [x] Add a standalone lint script and include it in the validation check.
+- [x] Split Node tests into unit and integration commands.
+- [x] Remove unused MOCK and MOCK_MODE environment variables.
+- [x] Resolve build warnings by refreshing browser data, updating the Tailwind toolchain, and aligning source-map settings.
+- [x] Isolate mock API state per app instance and test.
+- [x] Add a production-preview smoke test for the application shell, SPA route, and proxied API routes.
+- [x] Fix preview to use a one-shot production build.
 - [x] Document logger, proxy, request ID, and development workflows.
 
 ## Remaining improvements

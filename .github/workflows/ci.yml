@@ -28,17 +28,26 @@ jobs:
       - name: Check formatting
         run: yarn format:check
 
-      - name: Type-check frontend
-        run: yarn typecheck
+      - name: Lint repository
+        run: yarn lint
 
-      - name: Run tests
-        run: yarn test
+      - name: Type-check frontend
+        run: yarn check:types
+
+      - name: Run unit tests
+        run: yarn test:unit
+
+      - name: Run integration tests
+        run: yarn test:integration
 
       - name: Build production bundle
         run: yarn build:prd
+
+      - name: Smoke-test production preview
+        run: yarn test:preview
 
       - name: Install Chromium
         run: yarn playwright install --with-deps chromium
 
       - name: Run browser tests
-        run: yarn test:e2e
+        run: yarn test:browser

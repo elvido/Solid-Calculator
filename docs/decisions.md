@@ -25,7 +25,7 @@ middleware, and request tracing reusable outside the calculator application.
 ## Separate mock API process
 
 The mock API runs on its own port so frontend code exercises a realistic HTTP
-boundary. The app factory in `mock-server/app.mjs` is separate from the
+boundary. The app factory in `mock-server/api-app.mjs` is separate from the
 listener in `mock-server/index.mjs`, which makes the API easy to test and
 replace with a real backend later.
 
@@ -44,8 +44,9 @@ for environments where the optional logging dependency is unavailable.
 
 ## In-memory mock state
 
-The mock configuration intentionally resets on restart. This keeps the example
-dependency-free and makes local development predictable. A real application
+The mock configuration intentionally resets on restart. Its state is created
+per `createMockApp()` instance, which keeps tests independent while remaining
+dependency-free and predictable during local development. A real application
 should replace the route implementation with a persistence adapter rather than
 making the mock server responsible for production data.
 
