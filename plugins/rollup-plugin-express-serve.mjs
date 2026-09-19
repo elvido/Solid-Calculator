@@ -11,6 +11,8 @@ import micromatch from 'micromatch';
 import chalk from 'chalk';
 import { normalizeExpressServeOptions } from './express-serve-options.mjs';
 import log from './express-serve-logger.mjs';
+import { requestContext } from './request-context.mjs';
+import { rewriteProxyPath } from './proxy-utils.mjs';
 
 /**
  * Close a running server instance.
@@ -50,11 +52,14 @@ function createServer(options = {}) {
         : defaultLookup(filePath) || 'application/octet-stream';
   }
 
+  app.use(requestContext());
+
   // Enable request logging via Morgan if configured
   if (options.traceRequests) {
     // Register custom tokens once
     morgan.token('trace-source', (req, res) => res.getHeader('x-trace-source') || 'unknown');
     morgan.token('trace-target', (req, res) => res.getHeader('x-trace-target') || '');
+    morgan.token('request-id', (req) => req.requestId || 'unknown');
     morgan.token('content-length', (req, res) => {
       const len = res.getHeader('content-length');
       return len != null ? len : '-';
@@ -66,6 +71,7 @@ function createServer(options = {}) {
       const status = tokens.status(req, res);
       const source = tokens['trace-source'](req, res);
       const target = tokens['trace-target'](req, res);
+      const requestId = tokens['request-id'](req, res);
       const time = tokens['response-time'](req, res);
       const length = tokens['content-length'](req, res);
       const coloredStatus =
@@ -79,7 +85,25 @@ function createServer(options = {}) {
                 ? chalk.green.bold(status)
                 : chalk.bold(status);
 
-      return `Trace> ${method} ${url} → ${coloredStatus} (${source})${target ? ` → ${target}` : ''} +${time}ms : ${length} bytes`;
+      return (
+        'Trace> ' +
+        requestId +
+        ' ' +
+        method +
+        ' ' +
+        url +
+        ' → ' +
+        coloredStatus +
+        ' (' +
+        source +
+        ')' +
+        (target ? ' → ' + target : '') +
+        ' +' +
+        time +
+        'ms : ' +
+        length +
+        ' bytes'
+      );
     };
 
     const filter = options.traceRequests.filter;
@@ -145,34 +169,35 @@ function createServer(options = {}) {
     app.use(
       createProxyMiddleware({
         changeOrigin: true,
-        // Match only paths that start with a configured route
-        pathFilter: proxyRoutes,
+        // Match the configured route itself and all of its child paths.
+        pathFilter: (requestPath) => {
+          const pathname = requestPath.split('?')[0];
+          return proxyRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+        },
         router: routerMap,
 
-        // Rewrite path if stripPrefix is enabled
-        pathRewrite: (path, req) => {
-          const match = proxyRoutes.find(([route]) => req.originalUrl.startsWith(route));
-          if (true || match?.[1].stripPrefix === false) return '/api/config'; //path;
-        },
+        // Rewrite paths according to the matched route configuration.
+        pathRewrite: (requestPath, req) => rewriteProxyPath(requestPath, req.originalUrl || req.url, options.proxy),
 
         // Inject proxy headers
         on: {
           proxyReq: (proxyReq, req) => {
+            proxyReq.setHeader('x-request-id', req.requestId);
             proxyReq.setHeader('x-forwarded-for', req.ip);
             proxyReq.setHeader('x-forwarded-host', req.headers.host);
             proxyReq.setHeader('x-forwarded-proto', req.protocol);
             proxyReq.setHeader('forwarded', `for=${req.ip};proto=${req.protocol};host=${req.headers.host}`);
           },
           proxyRes: (proxyRes, req, res) => {
-            const match = proxyRoutes.find(([route]) => req.originalUrl.startsWith(route));
-            const rewrittenPath =
-              match?.[1].stripPrefix === false
-                ? req.originalUrl
-                : req.originalUrl.replace(new RegExp(`^${match?.[0]}`), '') || '/';
+            const rewrittenPath = rewriteProxyPath(
+              req.originalUrl || req.url,
+              req.originalUrl || req.url,
+              options.proxy
+            );
 
-            const fullTargetUrl = req.originalUrl; //match?.[1].target.replace(/\/$/, '') + '/' + rewrittenPath.replace(/^\//, '');
+            const fullTargetUrl = req.originalUrl;
             res.setHeader('x-trace-source', 'proxy');
-            res.setHeader('x-trace-target', fullTargetUrl);
+            res.setHeader('x-trace-target', fullTargetUrl + ' -> ' + rewrittenPath);
           },
         },
       })

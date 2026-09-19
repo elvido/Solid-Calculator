@@ -33,22 +33,26 @@ export interface Logger {
   level: string;
 
   /** Logs a critical error message. */
-  error(message: string, meta?: any): void;
+  error(...args: any[]): void;
 
   /** Logs a warning message. */
-  warn(message: string, meta?: any): void;
+  warn(...args: any[]): void;
 
   /** Logs detailed tracing information. */
-  verbose(message: string, meta?: any): void;
+  verbose(...args: any[]): void;
 
   /** Logs general application events. */
-  info(message: string, meta?: any): void;
+  info(...args: any[]): void;
 
   /** Logs development diagnostics. */
-  debug(message: string, meta?: any): void;
+  debug(...args: any[]): void;
 
   /** Generic logging method. Allows dynamic level selection. */
-  log(level: string, message: string, meta?: any): void;
+  log(level: string, ...args: any[]): void;
+}
+
+export interface ScopedLogger extends Logger {
+  withContext(context?: Record<string, unknown>): ScopedLogger;
 }
 
 /**
@@ -77,22 +81,25 @@ export interface Logging {
   register(factoryFn?: (options?: LoggerOptions) => Logger): void;
 
   /** Logs a critical error message. */
-  error(message: string, meta?: any): void;
+  error(...args: any[]): void;
 
   /** Logs a warning message. */
-  warn(message: string, meta?: any): void;
+  warn(...args: any[]): void;
 
   /** Logs detailed tracing information. */
-  verbose(message: string, meta?: any): void;
+  verbose(...args: any[]): void;
 
   /** Logs general application events. */
-  info(message: string, meta?: any): void;
+  info(...args: any[]): void;
 
   /** Logs development diagnostics. */
-  debug(message: string, meta?: any): void;
+  debug(...args: any[]): void;
 
   /** Generic logging method. Allows dynamic level selection. */
-  log(level: string, message: string, meta?: any): void;
+  log(level: string, ...args: any[]): void;
+
+  /** Creates a logger that automatically adds context metadata. */
+  withContext(context?: Record<string, unknown>): ScopedLogger;
 }
 
 /**

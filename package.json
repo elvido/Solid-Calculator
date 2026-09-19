@@ -2,6 +2,9 @@
   "name": "solid-calculator",
   "version": "1.0.1",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build:dev": "rollup -w -c rollup.config.dev.mjs",
     "build:prd": "rollup -c rollup.config.prd.mjs",
@@ -9,7 +12,12 @@
     "start:frontend": "cross-env MOCK=development yarn build:dev",
     "start:dev": "concurrently -n frontend,mock -c blue,green \"yarn start:frontend\" \"yarn start:mock\"",
     "start:preview": "node ./plugins/expressServe.mjs -c express-serve.config.mjs",
-    "build:preview": "yarn build:dev && yarn start:preview",
+    "build:preview": "yarn build:prd && yarn start:preview",
+    "test": "node --test test",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "check": "yarn format:check && yarn typecheck && yarn test && yarn build:prd",
     "format:update": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -31,7 +39,6 @@
     "autoprefixer": "^10.4.21",
     "babel-preset-solid": "^1.9.9",
     "chalk": "^5.6.2",
-    "concurrency": "^0.1.4",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "daisyui": "^5.3.1",
@@ -92,6 +99,7 @@
   },
   "homepage": "https://github.com/elvido/Solid-Calculator#readme",
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/micromatch": "^4"
   }
 }

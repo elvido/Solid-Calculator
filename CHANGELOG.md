@@ -2,6 +2,17 @@
 
 ## [unreleased]
 
+- **FIXED**: Route-aware proxy rewriting
+  - Removed the hard-coded /api/config rewrite
+  - Added prefix stripping, explicit rewrites, query preservation, and request ID forwarding
+- **IMPROVED**: Logging and request diagnostics
+  - Added request-scoped logger context, request IDs, variadic arguments, fallback file output, and LOG_LEVEL
+- **IMPROVED**: Calculator behavior
+  - Added operator precedence, keyboard input, backspace support, and a visible division-by-zero error state
+- **ADDED**: Node unit tests for proxy rewriting and scoped logger behavior
+- **ADDED**: Reusable-template documentation, environment configuration, CI, API integration tests, and Playwright browser tests
+- **IMPROVED**: Separated calculator logic from the UI and made the mock API independently testable
+- **FIXED**: Production preview now builds once before starting the standalone server
 - **IMPROVED**: Modularization of development server setup
   - Extracted Express server logic into reusable `createServing()` utility
   - Enables standalone use and Rollup plugin reuse with shared config

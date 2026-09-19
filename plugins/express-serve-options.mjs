@@ -12,7 +12,7 @@ import * as path from 'path';
  * @property {number} [port=10001] - Port to listen on.
  * @property {string} [host='localhost'] - Hostname to bind the server to.
  * @property {boolean|string} [openPage=false] - Page to open in the browser after the server starts.
- * @property {Record<string, string | { target: string, stripPrefix?: boolean }>} [proxy] - Proxy configuration: route to target mapping.
+ * @property {Record<string, string | { target: string, stripPrefix?: boolean, rewrite?: string }>} [proxy] - Proxy configuration: route to target mapping.
  * @property {boolean|string|string[]|{ path?: string, routes?: string[] }} [historyAPIFallback=false] - SPA fallback configuration.
  * @property {Record<string, string>} [headers] - Custom headers to apply to all responses.
  * @property {boolean} [verbose=true] - Whether to log server and proxy activity.
@@ -32,7 +32,7 @@ export function normalizeExpressServeOptions(raw = {}) {
   const content = normalizeContentBase(raw.contentBase);
   return {
     contentBase: content,
-    port: raw.port ?? 10001,
+    port: normalizePort(raw.port ?? 10001),
     host: raw.host ?? 'localhost',
     openPage: normalizeOpenPage(raw.openPage),
     proxy: normalizeProxy(raw.proxy),
@@ -45,6 +45,13 @@ export function normalizeExpressServeOptions(raw = {}) {
     traceRequests: normalizeTraceRequests(raw.traceRequests),
     mimeTypes: raw.mimeTypes ?? {},
   };
+}
+
+function normalizePort(port) {
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new RangeError(`Invalid server port: ${String(port)}. Use an integer between 0 and 65535.`);
+  }
+  return port;
 }
 
 function normalizeContentBase(contentBase) {
@@ -85,6 +92,7 @@ function normalizeProxy(proxy) {
       result[route] = {
         target: value.target,
         stripPrefix: value.stripPrefix ?? false,
+        rewrite: typeof value.rewrite === 'string' ? value.rewrite : undefined,
       };
     }
   }

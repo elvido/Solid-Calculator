@@ -1,26 +1,24 @@
-import express from 'express';
-import morgan from 'morgan';
+import 'dotenv/config';
 import log from './logger.mjs';
-import statusRoute from './routes/status.mjs';
-import configRoute from './routes/config.mjs';
+import app from './app.mjs';
 
-const app = express();
-const PORT = 3001;
+const configuredPort = Number(process.env.MOCK_PORT ?? 3001);
+if (!Number.isInteger(configuredPort) || configuredPort < 0 || configuredPort > 65535) {
+  throw new RangeError(`Invalid MOCK_PORT: ${process.env.MOCK_PORT}`);
+}
 
-// Add Morgan middleware
-// 'dev' is a concise, color-coded format good for development
-// Redirect Morgan logs to your logger
-app.use(
-  morgan('dev', {
-    stream: {
-      write: (msg) => log.verbose(msg.trim()),
-    },
-  })
-);
+const PORT = configuredPort;
+const HOST = process.env.MOCK_HOST ?? '127.0.0.1';
+const server = app.listen(PORT, HOST, () => log.verbose(`Mock server running at http://${HOST}:${PORT}`));
 
-app.use(express.json());
-
-app.use('/api/status', statusRoute);
-app.use('/api/config', configRoute);
-
-app.listen(PORT, () => log.verbose(`Mock server running at http://localhost:${PORT}`));
+for (const signal of ['SIGINT', 'SIGTERM', 'SIGQUIT']) {
+  process.once(signal, () => {
+    log.info(`Shutting down mock server after ${signal}`);
+    server.close((error) => {
+      if (error) {
+        log.error('Failed to shut down mock server', error);
+        process.exitCode = 1;
+      }
+    });
+  });
+}

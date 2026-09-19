@@ -58,10 +58,11 @@ export interface ExpressServeOptions {
    * @example
    * {
    *   '/api': 'http://localhost:3000',
-   *   '/auth': { target: 'http://localhost:4000', stripPrefix: true }
+   *   '/auth': { target: 'http://localhost:4000', stripPrefix: true },
+   *   '/config': { target: 'http://localhost:3000', rewrite: '/api/config' }
    * }
    */
-  proxy?: Record<string, string | { target: string; stripPrefix?: boolean }>;
+  proxy?: Record<string, string | { target: string; stripPrefix?: boolean; rewrite?: string }>;
 
   /**
    * Enables SPA fallback:

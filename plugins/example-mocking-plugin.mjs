@@ -25,7 +25,7 @@ export function exampleMocking() {
   router.post('/log', express.text(), (req, res) => {
     const logEntry = req.body;
     const timestamp = new Date().toISOString();
-    log.info(`${chalk.bold.magenta(`<AUDIT ${timestamp}>`)} "${logEntry}"`);
+    (req.log ?? log).info(`${chalk.bold.magenta(`<AUDIT ${timestamp}>`)} "${logEntry}"`);
     res.setHeader('x-trace-source', 'mock');
     res.status(200).json({ success: true });
   });

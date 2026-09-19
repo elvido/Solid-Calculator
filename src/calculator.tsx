@@ -1,23 +1,25 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onCleanup, onMount } from 'solid-js';
 import './index.css';
+import { applyDigitLimit, evaluateExpression, formatResult } from './calculator-logic.mjs';
+
+type Operator = '+' | '-' | '*' | '/';
+
+export { applyDigitLimit, evaluateExpression, formatResult };
 
 export default function Calculator() {
   const [display, setDisplay] = createSignal('0');
-  const [operator, setOperator] = createSignal<string | null>(null);
-  const [firstValue, setFirstValue] = createSignal<string | null>(null);
+  const [operator, setOperator] = createSignal<Operator | null>(null);
+  const [tokens, setTokens] = createSignal<string[]>([]);
   const [waitingForOperand, setWaitingForOperand] = createSignal(false);
-  const [expression, setExpression] = createSignal('');
   const [theme, setTheme] = createSignal('light');
 
   const digitLimit = 14;
 
-  onMount(() => {
-    loadConfig();
-  });
-
   const loadConfig = async () => {
     try {
       const res = await fetch('/config');
+      if (!res.ok) throw new Error('Configuration request failed');
+
       const data = await res.json();
       if (data.theme === 'light' || data.theme === 'dark') {
         setTheme(data.theme);
@@ -30,11 +32,12 @@ export default function Calculator() {
 
   const saveConfig = async (updates: { theme?: string }) => {
     try {
-      await fetch('/config', {
+      const res = await fetch('/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
+      if (!res.ok) throw new Error('Configuration update failed');
     } catch (err) {
       console.warn('Failed to save config:', err);
     }
@@ -42,16 +45,125 @@ export default function Calculator() {
 
   const sendLogEntry = async (expression: string) => {
     const timestamp = new Date().toISOString();
-    const logEntry = `Executed calculation at ${timestamp}: '${expression}'`;
+    const logEntry = 'Executed calculation at ' + timestamp + ": '" + expression + "'";
     try {
-      await fetch('/log', {
+      const res = await fetch('/log', {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: logEntry,
       });
+      if (!res.ok) throw new Error('Audit log request failed');
     } catch (err) {
       console.warn('Failed to send log entry:', err);
     }
+  };
+
+  const clear = () => {
+    setDisplay('0');
+    setOperator(null);
+    setTokens([]);
+    setWaitingForOperand(false);
+  };
+
+  const resetError = () => {
+    if (display() === 'Error') clear();
+  };
+
+  const inputDigit = (digit: string) => {
+    resetError();
+    const current = display();
+    const next = waitingForOperand()
+      ? digit
+      : current === '0'
+        ? digit
+        : current === '-'
+          ? '-' + digit
+          : current + digit;
+    setDisplay(applyDigitLimit(next, digitLimit));
+    setWaitingForOperand(false);
+  };
+
+  const inputDot = () => {
+    resetError();
+    const current = display();
+    if (waitingForOperand()) {
+      setDisplay('0.');
+      setWaitingForOperand(false);
+    } else if (current === '-') {
+      setDisplay('-0.');
+    } else if (!current.includes('.')) {
+      setDisplay(applyDigitLimit(current + '.', digitLimit));
+    }
+  };
+
+  const backspace = () => {
+    if (waitingForOperand() || display() === 'Error') return;
+
+    const current = display();
+    const next = current.length > 1 ? current.slice(0, -1) : '0';
+    setDisplay(next === '-' ? '0' : next);
+  };
+
+  const toggleSign = () => {
+    resetError();
+    if (waitingForOperand()) {
+      setDisplay('-');
+      setWaitingForOperand(false);
+      return;
+    }
+
+    const current = display();
+    setDisplay(current === '0' ? '-' : current.startsWith('-') ? current.slice(1) || '0' : '-' + current);
+    setWaitingForOperand(false);
+  };
+
+  const inputPercent = () => {
+    resetError();
+    const value = Number(display());
+    if (Number.isFinite(value)) {
+      setDisplay(formatResult(value / 100, digitLimit));
+      setWaitingForOperand(false);
+    }
+  };
+
+  const performOperation = (nextOperator: Operator) => {
+    if (display() === 'Error') {
+      clear();
+      return;
+    }
+
+    const current = display();
+    const currentTokens = tokens();
+
+    if (waitingForOperand()) {
+      if (currentTokens.length > 0) {
+        setTokens([...currentTokens.slice(0, -1), nextOperator]);
+      } else {
+        setTokens([current, nextOperator]);
+      }
+    } else if (currentTokens.length === 0) {
+      setTokens([current, nextOperator]);
+    } else {
+      setTokens([...currentTokens, current, nextOperator]);
+    }
+
+    setOperator(nextOperator);
+    setWaitingForOperand(true);
+  };
+
+  const handleEquals = () => {
+    if (tokens().length === 0 || operator() == null) return;
+
+    const fullExpression = [...tokens(), display()];
+    const result = evaluateExpression(fullExpression);
+    const formatted = formatResult(result, digitLimit);
+    const expressionText = fullExpression.join(' ') + ' = ' + formatted;
+
+    setDisplay(formatted);
+    setTokens([]);
+    setOperator(null);
+    setWaitingForOperand(true);
+    sendLogEntry(expressionText);
   };
 
   const toggleTheme = () => {
@@ -61,102 +173,39 @@ export default function Calculator() {
     saveConfig({ theme: next });
   };
 
-  function formatResult(value: number): string {
-    return Number(value)
-      .toPrecision(digitLimit)
-      .replace(/\.?0+$/, '');
-  }
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const key = event.key;
 
-  function applyDigitLimit(input: string): string {
-    const unsigned = input.startsWith('-') || input.startsWith('+') ? input.slice(1) : input;
-    const digitsOnly = unsigned.replace('.', '');
-    const excess = digitsOnly.length - digitLimit;
+    if (/^[0-9]$/.test(key)) inputDigit(key);
+    else if (key === '.' || key === ',') inputDot();
+    else if (key === '+' || key === '-' || key === '*' || key === '/') performOperation(key as Operator);
+    else if (key === '%') inputPercent();
+    else if (key === 'Enter' || key === '=') handleEquals();
+    else if (key === 'Escape' || key === 'Delete') clear();
+    else if (key === 'Backspace') backspace();
+    else return;
 
-    return excess <= 0 ? input : input.slice(0, input.length - excess);
-  }
-
-  const inputDigit = (digit: string) => {
-    const current = display();
-    const next = waitingForOperand() ? digit : current === '0' ? digit : current + digit;
-    setDisplay(applyDigitLimit(next));
-    setWaitingForOperand(false);
+    event.preventDefault();
   };
 
-  const inputDot = () => {
-    const current = display();
-    if (!current.includes('.')) {
-      setDisplay(applyDigitLimit(current + '.'));
-    }
-  };
+  onMount(() => {
+    loadConfig();
+    window.addEventListener('keydown', handleKeyDown);
+  });
 
-  const clear = () => {
-    setDisplay('0');
-    setOperator(null);
-    setFirstValue(null);
-    setWaitingForOperand(false);
-    setExpression('');
-  };
-
-  const toggleSign = () => {
-    setDisplay(display().startsWith('-') ? display().slice(1) : '-' + display());
-  };
-
-  const inputPercent = () => {
-    const value = parseFloat(display());
-    if (!isNaN(value)) setDisplay(String(value / 100));
-  };
-
-  const performOperation = (nextOperator: string) => {
-    const inputValue = parseFloat(display());
-    if (firstValue() == null) {
-      setFirstValue(display());
-      setExpression(`${display()}`);
-    } else if (operator()) {
-      setExpression(expression() + ` ${operator()} ${display()}`);
-      const result = calculate(parseFloat(firstValue()!), inputValue, operator()!);
-      setDisplay(formatResult(result));
-      setFirstValue(String(result));
-    }
-    setOperator(nextOperator);
-    setWaitingForOperand(true);
-  };
-
-  const calculate = (first: number, second: number, op: string): number => {
-    switch (op) {
-      case '+':
-        return first + second;
-      case '-':
-        return first - second;
-      case '*':
-        return first * second;
-      case '/':
-        return second !== 0 ? first / second : NaN;
-      default:
-        return second;
-    }
-  };
-
-  const handleEquals = () => {
-    if (operator() && firstValue() != null) {
-      const first = parseFloat(firstValue()!);
-      const second = parseFloat(display());
-      setExpression(expression() + ` ${operator()} ${display()}`);
-      const result = calculate(first, second, operator()!);
-      const formatted = formatResult(result);
-      setExpression(expression() + ` = ${formatted}`);
-      setDisplay(formatted);
-      setFirstValue(null);
-      setOperator(null);
-      setWaitingForOperand(false);
-
-      sendLogEntry(expression());
-      setExpression('');
-    }
-  };
+  onCleanup(() => {
+    window.removeEventListener('keydown', handleKeyDown);
+  });
 
   const Button = (props: { label: string; onClick: () => void; class?: string }) => (
     <button
-      class={`btn w-full ${props.class?.includes('col-span-2') ? '' : 'aspect-square'} ${props.class || 'btn-digit'}`}
+      type="button"
+      class={
+        'btn w-full ' +
+        (props.class?.includes('col-span-2') ? '' : 'aspect-square') +
+        ' ' +
+        (props.class || 'btn-digit')
+      }
       onClick={() => props.onClick()}
     >
       {props.label}
@@ -166,13 +215,15 @@ export default function Calculator() {
   return (
     <div class="max-w-xs mx-auto mt-10 p-6 bg-base-200 rounded-box shadow text-center">
       <div class="flex justify-end mb-4">
-        <button class="btn btn-sm btn-outline" onClick={toggleTheme}>
+        <button type="button" class="btn btn-sm btn-outline" onClick={toggleTheme}>
           {theme() === 'light' ? '🌙 Dark' : '☀️ Light'}
         </button>
       </div>
 
       <h1 class="text-2xl font-bold mb-4">Solid Calculator</h1>
-      <div class="mb-4 text-right text-3xl bg-base-100 p-2 rounded-box border font-mono">{display()}</div>
+      <div class="mb-4 text-right text-3xl bg-base-100 p-2 rounded-box border font-mono" aria-live="polite">
+        {display()}
+      </div>
 
       <div class="grid grid-cols-4 gap-2 mb-2 auto-rows-fr">
         <Button label="AC" onClick={clear} class="btn-function" />

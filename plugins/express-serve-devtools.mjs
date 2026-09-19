@@ -25,8 +25,10 @@ export function devtoolsPlugin(options = {}) {
 
   // Helper logger that only prints if verbose mode is enabled
   function logInfo(...args) {
+    const formatArgs = (args) => args.map((arg) => (typeof arg === 'string' ? arg : JSON.stringify(arg))).join(' ');
+
     if (options.verbose) {
-      log.verbose('[DevToolsPlugin]', ...args);
+      log.verbose('[DevToolsPlugin] ' + formatArgs(args));
     }
   }
 

@@ -1,0 +1,220 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.fixAll.eslint": "explicit"
+    },
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ],
+    "editor.autoIndentOnPaste": true,
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "cSpell.words": [
+      "appspecific",
+      "Hofmann"
+    ],
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "files.trimTrailingWhitespace": true
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "editorconfig.editorconfig",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "compounds": [
+      {
+        "name": "Debug Frontend (incl. Mocks)",
+        "configurations": [
+          "Launch Mock Server",
+          "Serve Frontend",
+          "Debug Frontend in Edge"
+        ]
+      }
+    ],
+    "configurations": [
+      {
+        "type": "msedge",
+        "request": "launch",
+        "name": "Debug Frontend in Edge",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder}/src",
+        "sourceMaps": true,
+        "sourceMapPathOverrides": {
+          "webpack:///src/*": "${webRoot}/*",
+          "rollup:///src/*": "${webRoot}/*",
+          "file:///src/*": "${webRoot}/*"
+        }
+      },
+      {
+        "type": "node-terminal",
+        "request": "launch",
+        "name": "Serve Frontend",
+        "command": "node ./plugins/expressServe.mjs --config=express-serve.config.mjs --folder=dist,. --open=false",
+        "cwd": "${workspaceFolder}"
+      },
+      {
+        "type": "node-terminal",
+        "request": "launch",
+        "name": "Launch Mock Server",
+        "command": "node mock-server/index.mjs",
+        "cwd": "${workspaceFolder}"
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Debug Express Serve",
+        "runtimeExecutable": "node",
+        "runtimeArgs": [
+          "--preserve-symlinks",
+          "--preserve-symlinks-main",
+          "--experimental-modules",
+          "--inspect=9229"
+        ],
+        "args": [
+          "plugins/expressServe.mjs"
+        ],
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MOCK": "development"
+        },
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen"
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Debug Mock Server",
+        "runtimeExecutable": "node",
+        "runtimeArgs": [
+          "--preserve-symlinks",
+          "--preserve-symlinks-main",
+          "--experimental-modules",
+          "--inspect=9229"
+        ],
+        "args": [
+          "mock-server/index.mjs"
+        ],
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "MOCK": "development"
+        },
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen"
+      },
+      {
+        "type": "pwa-node",
+        "request": "attach",
+        "name": "Attach to Mock Server",
+        "port": 9229,
+        "restart": true,
+        "skipFiles": [
+          "<node_internals>/**"
+        ]
+      },
+      {
+        "type": "node",
+        "request": "attach",
+        "name": "Attach to Node",
+        "port": 9229
+      },
+      {
+        "name": "Attach by Process ID",
+        "processId": "${command:PickProcess}",
+        "request": "attach",
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
+        "type": "node"
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build: Production",
+        "type": "shell",
+        "command": "yarn",
+        "args": [
+          "build:prd"
+        ],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "presentation": {
+          "panel": "shared",
+          "focus": false,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Format: Update",
+        "type": "shell",
+        "command": "yarn",
+        "args": [
+          "format:update"
+        ],
+        "group": {
+          "kind": "build"
+        },
+        "presentation": {
+          "panel": "shared",
+          "focus": false,
+          "reveal": "always"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start: Dev",
+        "type": "shell",
+        "command": "yarn",
+        "args": [
+          "start:dev"
+        ],
+        "group": {
+          "kind": "test"
+        },
+        "presentation": {
+          "panel": "shared",
+          "focus": false,
+          "reveal": "always"
+        },
+        "isBackground": true,
+        "problemMatcher": [
+          "$eslint-compact"
+        ]
+      }
+    ]
+  }
+}

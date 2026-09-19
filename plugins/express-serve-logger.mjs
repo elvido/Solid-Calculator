@@ -1,3 +1,5 @@
+import { appendFileSync } from 'node:fs';
+
 /**
  * Creates a logger instance using Winston if available, otherwise falls back
  * to a simple console-based logger. Supports custom log levels and output formats.
@@ -142,6 +144,57 @@ const loggingLevels = {
   },
 };
 
+// Matches ANSI/ECMA-48 terminal control sequences so log files contain plain text.
+const ansiPattern = /\u001b\[[0-?]*[ -/]*[@-~]/g;
+
+function stringifyLogValue(value) {
+  if (value instanceof Error) {
+    return JSON.stringify({ name: value.name, message: value.message, stack: value.stack });
+  }
+
+  if (typeof value === 'string') return value;
+
+  try {
+    const serialized = JSON.stringify(value);
+    return serialized === undefined ? String(value) : serialized;
+  } catch {
+    return String(value);
+  }
+}
+
+function formatLogArgs(args) {
+  return args.map(stringifyLogValue).join(' ');
+}
+
+function findMetadataIndex(args) {
+  for (let index = args.length - 1; index >= 0; index -= 1) {
+    const value = args[index];
+    if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Error)) return index;
+  }
+  return -1;
+}
+
+function normalizeLogLevel(level) {
+  const requested = level ?? process.env.LOG_LEVEL ?? 'info';
+  return Object.prototype.hasOwnProperty.call(loggingLevels.levels, requested) ? requested : 'info';
+}
+
+function writeFallbackFile(file, level, args, timestamp) {
+  if (!file) return;
+
+  const entry = JSON.stringify({
+    timestamp,
+    level,
+    message: formatLogArgs(args).replace(ansiPattern, ''),
+  });
+
+  try {
+    appendFileSync(file, entry + '\n', 'utf8');
+  } catch (error) {
+    console.error('Failed to write log file "' + file + '":', error);
+  }
+}
+
 /**
  * Logger factory function.
  * Creates a Winston logger if available, otherwise returns a console-based fallback logger.
@@ -151,7 +204,7 @@ const loggingLevels = {
 function createLogger(_options = {}) {
   // Normalize and validate options
   const options = {
-    level: Object.prototype.hasOwnProperty.call(loggingLevels.levels, _options.level) ? _options.level : 'info',
+    level: normalizeLogLevel(_options.level),
     file: _options.file,
     silent: _options.silent ? true : false,
   };
@@ -183,6 +236,7 @@ function createLogger(_options = {}) {
       ),
       json: winstonModule.format.combine(
         upperCaseLevel(),
+        winstonModule.format.uncolorize(),
         winstonModule.format.timestamp(),
         winstonModule.format.json()
       ),
@@ -201,7 +255,29 @@ function createLogger(_options = {}) {
       transports: transports,
     });
 
-    return winstonLogger;
+    const writeWinston = (level, args) => {
+      const metadataIndex = findMetadataIndex(args);
+      const metadata = metadataIndex >= 0 ? args[metadataIndex] : undefined;
+      const messageArgs = metadataIndex >= 0 ? args.filter((_, index) => index !== metadataIndex) : args;
+      const message = formatLogArgs(messageArgs);
+
+      return metadata ? winstonLogger.log(level, message, metadata) : winstonLogger.log(level, message);
+    };
+
+    return {
+      get level() {
+        return winstonLogger.level;
+      },
+      set level(value) {
+        winstonLogger.level = value;
+      },
+      error: (...args) => writeWinston('error', args),
+      warn: (...args) => writeWinston('warn', args),
+      verbose: (...args) => writeWinston('verbose', args),
+      info: (...args) => writeWinston('info', args),
+      debug: (...args) => writeWinston('debug', args),
+      log: (level, ...args) => writeWinston(level, args),
+    };
   }
   // Fallback: simple console-based logger with ANSI color support
 
@@ -248,16 +324,15 @@ function createLogger(_options = {}) {
   // Core logging function of the ConsoleLogger
   const log = options.silent
     ? () => {}
-    : (lvl, msg, meta) => {
+    : (lvl, ...args) => {
         if (levels[lvl] > levels[consoleLogger.level]) return;
 
         const timestamp = new Date().toISOString();
         const color = colorizer[colors[lvl]]; //chalk[colors[lvl]] ?? chalk.white;
         const label = color(`[${timestamp} - ${lvl.toUpperCase()}]`);
 
-        const output = typeof msg === 'string' ? msg : JSON.stringify(msg);
-        const extra = meta ? ` ${JSON.stringify(meta)}` : '';
-        const fullMessage = `${label} ${output}${extra}`;
+        const output = formatLogArgs(args);
+        const fullMessage = label + ' ' + output;
 
         // Route to appropriate console method
         switch (lvl) {
@@ -271,17 +346,18 @@ function createLogger(_options = {}) {
             console.log(fullMessage);
             break;
         }
+        writeFallbackFile(options.file, lvl, args, timestamp);
       };
 
   // Create logger object with mutable methods
   const consoleLogger = {
     level: options.level,
-    error: (msg, meta) => log('error', msg, meta),
-    warn: (msg, meta) => log('warn', msg, meta),
-    verbose: (msg, meta) => log('verbose', msg, meta),
-    info: (msg, meta) => log('info', msg, meta),
-    debug: (msg, meta) => log('debug', msg, meta),
-    log: (lvl, msg, meta) => log(lvl, msg, meta),
+    error: (...args) => log('error', ...args),
+    warn: (...args) => log('warn', ...args),
+    verbose: (...args) => log('verbose', ...args),
+    info: (...args) => log('info', ...args),
+    debug: (...args) => log('debug', ...args),
+    log: (lvl, ...args) => log(lvl, ...args),
   };
 
   return consoleLogger;
@@ -318,14 +394,54 @@ class LoggerController {
 
   // Delegates logging to the appropriate method
   log(level, ...args) {
-    const lvl = level !== 'log' ? level : args[0];
-    if (Object.prototype.hasOwnProperty.call(loggingLevels.levels, lvl)) {
+    if (level === 'log') {
+      const [explicitLevel, ...rest] = args;
+      if (Object.prototype.hasOwnProperty.call(loggingLevels.levels, explicitLevel)) {
+        return this.logger.log(explicitLevel, ...rest);
+      }
+      throw new Error('Unknown logging level: "' + explicitLevel + '"');
+    }
+
+    if (Object.prototype.hasOwnProperty.call(loggingLevels.levels, level)) {
       return this.logger[level](...args);
     }
-    throw new Error(`Unknown logging level: "${lvl}"`);
+
+    throw new Error('Unknown logging level: "' + level + '"');
   }
 }
 
+function mergeContextArgs(context, args) {
+  if (!context || Object.keys(context).length === 0) return args;
+
+  const metadataIndex = findMetadataIndex(args);
+
+  if (metadataIndex >= 0) {
+    return args.map((value, index) => (index === metadataIndex ? { ...context, ...value } : value));
+  }
+
+  return [...args, context];
+}
+
+function createScopedLogger(controller, context) {
+  const scoped = {
+    get level() {
+      return controller.logger.level;
+    },
+    get levels() {
+      return Object.keys(loggingLevels.levels);
+    },
+    withContext(additionalContext = {}) {
+      return createScopedLogger(controller, { ...context, ...additionalContext });
+    },
+  };
+
+  for (const level of Object.keys(loggingLevels.levels)) {
+    scoped[level] = (...args) => controller.log(level, ...mergeContextArgs(context, args));
+  }
+
+  scoped.log = (level, ...args) => controller.log('log', level, ...mergeContextArgs(context, args));
+  return scoped;
+}
 /**
  * Proxy-based logger interface.
  * Wraps a dynamic logger instance and exposes logging methods, configuration utilities,
@@ -339,6 +455,7 @@ const log = new Proxy(new LoggerController(), {
     if (prop === 'levels') return Object.keys(loggingLevels.levels); // Return all valid levels
     if (prop === 'config') return (options) => target.config(options); // Initialize with options
     if (prop === 'register') return (fn) => target.register(fn);
+    if (prop === 'withContext') return (context) => createScopedLogger(target, context);
     return (...args) => target.log(prop, ...args); // Delegate to logger method
   },
   set(target, prop, value) {
