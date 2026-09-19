@@ -38,6 +38,9 @@
     "[css]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
+    "[markdown]": {
+      "editor.wordWrap": "off"
+    },
     "files.trimTrailingWhitespace": true
   },
   "extensions": {

@@ -36,20 +36,20 @@ flowchart LR
 
 ## Directory responsibilities
 
-| Area | Responsibility |
-| --- | --- |
-| `src/` | SolidJS application, routes, calculator state, keyboard handling, and styling |
-| `rollup.config.base.mjs` | Shared TypeScript, Babel, ESLint, PostCSS, asset, HTML, and source-map pipeline |
-| `rollup.config.dev.mjs` | Watch build, development Express server, and live reload |
-| `rollup.config.prd.mjs` | Clean, minified production build without source maps |
+| Area                                      | Responsibility                                                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `src/`                                    | SolidJS application, routes, calculator state, keyboard handling, and styling                       |
+| `rollup.config.base.mjs`                  | Shared TypeScript, Babel, ESLint, PostCSS, asset, HTML, and source-map pipeline                     |
+| `rollup.config.dev.mjs`                   | Watch build, development Express server, and live reload                                            |
+| `rollup.config.prd.mjs`                   | Clean, minified production build without source maps                                                |
 | `plugins/rollup-plugin-express-serve.mjs` | Reusable Express server, static files, proxying, SPA fallback, tracing, and middleware registration |
-| `plugins/expressServe.mjs` | Standalone CLI for serving an existing build |
-| `plugins/proxy-path.mjs` | Route matching and proxy path rewriting |
-| `plugins/request-context.mjs` | Request IDs, response headers, and request-scoped loggers |
-| `plugins/express-serve-logger.mjs` | Shared Winston/fallback logger, log levels, context metadata, and file output |
-| `mock-server/` | Development-only API server and route modules |
-| `plugins/example-mocking-plugin.mjs` | Inline frontend-server mock routes, including the `/log` endpoint |
-| `express-serve.config.mjs` | Local port, static roots, SPA routes, proxy routes, and middleware configuration |
+| `plugins/expressServe.mjs`                | Standalone CLI for serving an existing build                                                        |
+| `plugins/proxy-path.mjs`                  | Route matching and proxy path rewriting                                                             |
+| `plugins/request-context.mjs`             | Request IDs, response headers, and request-scoped loggers                                           |
+| `plugins/express-serve-logger.mjs`        | Shared Winston/fallback logger, log levels, context metadata, and file output                       |
+| `mock-server/`                            | Development-only API server and route modules                                                       |
+| `plugins/example-mocking-plugin.mjs`      | Inline frontend-server mock routes, including the `/log` endpoint                                   |
+| `express-serve.config.mjs`                | Local port, static roots, SPA routes, proxy routes, and middleware configuration                    |
 
 ## Development startup
 
@@ -106,12 +106,12 @@ flowchart TD
 
 The configured routes are:
 
-| Browser path | Handler | Target behavior |
-| --- | --- | --- |
-| `GET/POST /config` | Frontend proxy | Rewritten to `GET/POST /api/config` on port 3001 |
-| `GET/POST /api/*` | Frontend proxy | Forwarded to the same path on port 3001 |
-| `POST /log` | Inline example middleware | Logged by the development process; no persistence |
-| `/about` | SPA fallback | Serves the built application entry point |
+| Browser path       | Handler                   | Target behavior                                   |
+| ------------------ | ------------------------- | ------------------------------------------------- |
+| `GET/POST /config` | Frontend proxy            | Rewritten to `GET/POST /api/config` on port 3001  |
+| `GET/POST /api/*`  | Frontend proxy            | Forwarded to the same path on port 3001           |
+| `POST /log`        | Inline example middleware | Logged by the development process; no persistence |
+| `/about`           | SPA fallback              | Serves the built application entry point          |
 
 Proxy matching respects route boundaries, chooses the most specific configured
 route, preserves query strings, and forwards the request ID through the proxy.
@@ -175,6 +175,22 @@ the configured API proxy routes.
   independently from the Express server.
 - Update the relevant README, plugin reference, changelog, or TODO entry when
   behavior changes.
+
+## Documentation map
+
+The supporting guides in `docs/` cover the project lifecycle around this
+architecture:
+
+| Document                                            | Purpose                                                  |
+| --------------------------------------------------- | -------------------------------------------------------- |
+| [creating-a-project.md](docs/creating-a-project.md) | Adapt the template into a new application                |
+| [decisions.md](docs/decisions.md)                   | Understand the key architectural trade-offs              |
+| [learning-path.md](docs/learning-path.md)           | Follow the recommended learning and exploration sequence |
+| [release-checklist.md](docs/release-checklist.md)   | Validate and prepare a release                           |
+
+Start with [README.md](README.md) for setup and daily commands, then use this
+architecture overview to understand system boundaries before consulting the
+focused guides above.
 
 ## Known boundaries
 
