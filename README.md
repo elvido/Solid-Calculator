@@ -29,8 +29,8 @@ yarn dev
 
 This runs:
 
-| Process  | Command             | Purpose                                                                         | Port |
-| -------- | ------------------- | ------------------------------------------------------------------------------- | ---- |
+| Process  | Command           | Purpose                                                                         | Port |
+| -------- | ----------------- | ------------------------------------------------------------------------------- | ---- |
 | Frontend | yarn dev:frontend | Rollup watch build, Express static server, SPA fallback, proxy, and live reload | 3000 |
 | Mock API | yarn dev:mock     | Nodemon-watched Express mock server                                             | 3001 |
 
@@ -202,27 +202,28 @@ More complete option references are available in [plugins/expressServe.md](plugi
 
 Available project scripts are:
 
-| Script                | Description                                                                  |
-| --------------------- | ---------------------------------------------------------------------------- |
-| yarn dev              | Run frontend watch mode and mock API concurrently                            |
-| yarn dev:frontend     | Start the frontend watch mode                                                |
-| yarn dev:mock         | Start the Nodemon-watched mock API                                           |
-| yarn preview:serve    | Serve the existing build through the standalone server                       |
-| yarn build:dev        | Run Rollup in watch mode                                                     |
-| yarn build:prd        | Create a clean minified production build                                     |
-| yarn preview          | Create a production build and serve it through the standalone preview server |
-| yarn test:unit        | Run isolated calculations, logger, and proxy-path tests                      |
-| yarn test:integration | Run mock API and live proxy integration tests                                |
-| yarn test:node        | Run both Node.js test layers                                                 |
-| yarn test:preview     | Smoke-test the built production server and proxied API routes               |
-| yarn test:browser     | Run Playwright browser tests                                                 |
-| yarn test:browser:install | Install the Chromium binary used by browser tests                        |
-| yarn test             | Run the complete Node and browser test suites                                |
-| yarn lint             | Run ESLint independently on the repository                                  |
-| yarn check:types      | Type-check the frontend without emitting files                              |
-| yarn check            | Run formatting, linting, type-checking, Node tests, and the production build |
-| yarn format           | Format repository files with Prettier                                        |
-| yarn format:check     | Check formatting without modifying files                                     |
+| Script                    | Description                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| yarn dev                  | Run frontend watch mode and mock API concurrently                            |
+| yarn dev:frontend         | Start the frontend watch mode                                                |
+| yarn dev:mock             | Start the Nodemon-watched mock API                                           |
+| yarn preview:serve        | Serve the existing build through the standalone server                       |
+| yarn build:dev            | Run Rollup in watch mode                                                     |
+| yarn build:prd            | Create a clean minified production build                                     |
+| yarn clean                | Remove generated build, test, coverage, and lint artifacts                  |
+| yarn preview              | Create a production build and serve it through the standalone preview server |
+| yarn test:unit            | Run isolated calculations, logger, and proxy-path tests                      |
+| yarn test:integration     | Run mock API and live proxy integration tests                                |
+| yarn test:node            | Run both Node.js test layers                                                 |
+| yarn test:preview         | Smoke-test the built production server and proxied API routes                |
+| yarn test:browser         | Run Playwright browser tests                                                 |
+| yarn test:browser:install | Install the Chromium binary used by browser tests                            |
+| yarn test                 | Run the complete Node and browser test suites                                |
+| yarn lint                 | Run ESLint independently on the repository                                   |
+| yarn check:types          | Type-check the frontend without emitting files                               |
+| yarn check                | Run formatting, linting, type-checking, Node tests, and the production build |
+| yarn format               | Format repository files with Prettier                                        |
+| yarn format:check         | Check formatting without modifying files                                     |
 
 ## Current limitations and follow-up work
 
@@ -230,11 +231,15 @@ Available project scripts are:
 - Mock configuration is process-local; each app instance starts with a fresh
   state and the standalone mock server resets it on restart.
 - `yarn test:preview` expects `dist/` to exist; run `yarn build:prd` first.
+- `yarn clean --dry-run` previews the generated artifacts that `yarn clean` would remove.
+- `yarn clean --fresh` performs the same cleanup and also removes `node_modules`; run
+  `yarn install` afterward.
 - The project should be kept locally available when stored in OneDrive; online-only dependency files can cause Node read timeouts.
 
 ## Documentation map
 
 - [ARCHITECTURE.md](ARCHITECTURE.md): system boundaries, request flows, and extension points
+- [docs/cookbook.md](docs/cookbook.md): copy-paste recipes for SolidJS, APIs, styling, testing, and builds
 - [docs/creating-a-project.md](docs/creating-a-project.md): turn the repository into a new project
 - [docs/learning-path.md](docs/learning-path.md): guided tour and practical exercises
 - [docs/decisions.md](docs/decisions.md): important architecture choices and trade-offs

@@ -21,6 +21,8 @@
 - **FIXED**: Production builds no longer emit stale browser-data, Tailwind Node deprecation, or Rollup sourcemap warnings
 - **IMPROVED**: Isolated mock API configuration state per app instance and reset browser-test state before each test
 - **ADDED**: Production-preview smoke tests for built pages and proxied API routes
+- **ADDED**: Safe `yarn clean` command with a `--dry-run` preview for generated artifacts
+- **IMPROVED**: Added opt-in `yarn clean --fresh` mode for removing `node_modules`
 - **FIXED**: Production preview now builds once before starting the standalone server
 - **IMPROVED**: Modularization of development server setup
   - Extracted Express server logic into reusable `createServing()` utility

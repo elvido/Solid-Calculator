@@ -6,6 +6,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "clean": "node scripts/clean.mjs",
     "build:dev": "rollup -w -c rollup.config.dev.mjs",
     "build:prd": "rollup -c rollup.config.prd.mjs",
     "dev": "concurrently -n frontend,mock -c blue,green \"yarn dev:frontend\" \"yarn dev:mock\"",

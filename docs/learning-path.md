@@ -34,6 +34,11 @@ the built application shell, SPA fallback, and production proxy wiring. Read
 [ARCHITECTURE.md](../ARCHITECTURE.md) before changing the server. It explains
 which process owns each request.
 
+When you want to rebuild from a clean generated state, use `yarn clean`. Use
+`yarn clean --dry-run` first if you want to review the exact artifact list.
+Use `yarn clean --fresh` only when you also want to remove `node_modules`; run
+`yarn install` afterward.
+
 ## 2. Learn the frontend
 
 Start with these files in order:

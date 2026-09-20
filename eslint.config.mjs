@@ -12,7 +12,7 @@ export default [
   },
   js.configs.recommended,
   {
-    files: ['*.mjs', 'plugins/**/*.mjs', 'mock-server/**/*.mjs', 'test/**/*.mjs'],
+    files: ['*.mjs', 'plugins/**/*.mjs', 'mock-server/**/*.mjs', 'scripts/**/*.mjs', 'test/**/*.mjs'],
     languageOptions: {
       globals: {
         console: 'readonly',

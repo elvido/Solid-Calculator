@@ -42,6 +42,7 @@ flowchart LR
 | `rollup.config.base.mjs`                  | Shared TypeScript, Babel, ESLint, PostCSS, asset, HTML, and source-map pipeline                     |
 | `rollup.config.dev.mjs`                   | Watch build, development Express server, and live reload                                            |
 | `rollup.config.prd.mjs`                   | Clean, minified production build without source maps                                                |
+| `scripts/clean.mjs`                       | Removes generated artifacts, with optional dependency cleanup via `--fresh`                        |
 | `plugins/rollup-plugin-express-serve.mjs` | Reusable Express server, static files, proxying, SPA fallback, tracing, and middleware registration |
 | `plugins/expressServe.mjs`                | Standalone CLI for serving an existing build                                                        |
 | `plugins/proxy-path.mjs`                  | Route matching and proxy path rewriting                                                             |
@@ -50,6 +51,17 @@ flowchart LR
 | `mock-server/`                            | Development-only API server and route modules                                                       |
 | `plugins/example-mocking-plugin.mjs`      | Inline frontend-server mock routes, including the `/log` endpoint                                   |
 | `express-serve.config.mjs`                | Local port, static roots, SPA routes, proxy routes, and middleware configuration                    |
+
+The documentation is organized by purpose:
+
+| Document | Purpose |
+| --- | --- |
+| `README.md` | Quick start, daily commands, and project overview |
+| `docs/cookbook.md` | Practical recipes for extending the frontend, APIs, styling, tests, and builds |
+| `docs/learning-path.md` | Guided sequence for understanding the existing project |
+| `docs/creating-a-project.md` | Steps for adapting the template to a new application |
+| `docs/decisions.md` | Architecture decisions and trade-offs |
+| `docs/release-checklist.md` | Validation and publishing checklist |
 
 ## Development startup
 
