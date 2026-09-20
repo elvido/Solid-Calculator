@@ -12,7 +12,7 @@
     "dev": "concurrently -n frontend,mock -c blue,green \"yarn dev:frontend\" \"yarn dev:mock\"",
     "dev:frontend": "yarn build:dev",
     "dev:mock": "nodemon --config mock-server/nodemon.json",
-    "preview:serve": "node ./plugins/expressServe.mjs -c express-serve.config.mjs",
+    "preview:serve": "node ./plugins/express-serve.mjs -c express-serve.config.mjs",
     "preview": "yarn build:prd && yarn preview:serve",
     "test:unit": "tsx --test test/calculations.test.ts test/logger.test.mjs test/proxy-path.test.mjs",
     "test:integration": "tsx --test test/mock-api.test.mjs test/proxy-integration.test.mjs",

@@ -3,7 +3,22 @@ import os from 'os';
 import process from 'process';
 
 const router = Router();
-const safeEnvironmentKeys = ['NODE_ENV', 'FRONTEND_HOST', 'FRONTEND_PORT', 'MOCK_HOST', 'MOCK_PORT', 'LOG_LEVEL'];
+const safeEnvironmentKeys = [
+  // Standard runtime and terminal metadata that is useful for diagnostics.
+  'CI',
+  'LANG',
+  'LC_ALL',
+  'NODE_ENV',
+  'TERM',
+  'TZ',
+  // Project configuration values used by the local servers.
+  'FRONTEND_HOST',
+  'FRONTEND_PORT',
+  'MOCK_HOST',
+  'MOCK_PORT',
+  'OPEN_PAGE',
+  'LOG_LEVEL',
+];
 
 function getSafeEnvironment(environment) {
   return Object.fromEntries(

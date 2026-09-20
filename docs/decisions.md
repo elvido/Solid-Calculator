@@ -19,7 +19,7 @@ small custom bundle.
 ## Express as a reusable development server
 
 The Express server is implemented as a Rollup plugin but can also run through
-`plugins/expressServe.mjs`. This keeps static serving, SPA fallback, proxying,
+`plugins/express-serve.mjs`. This keeps static serving, SPA fallback, proxying,
 middleware, and request tracing reusable outside the calculator application.
 
 ## Separate mock API process
@@ -49,6 +49,14 @@ per `createMockApp()` instance, which keeps tests independent while remaining
 dependency-free and predictable during local development. A real application
 should replace the route implementation with a persistence adapter rather than
 making the mock server responsible for production data.
+
+## Allowlisted status environment
+
+The status endpoint exposes only diagnostic runtime metadata and known project
+configuration values. Standard values such as `CI`, `LANG`, `NODE_ENV`, `TERM`,
+and `TZ` are useful when diagnosing local or CI behavior. Host, port, log-level,
+and browser-opening settings are also safe to expose. URLs, paths, credentials,
+tokens, and other arbitrary environment variables remain hidden.
 
 ## Why the calculator logic is separate
 

@@ -10,7 +10,7 @@ Solid Calculator is a small single-page application (SPA) built with SolidJS, Ty
 
 Install dependencies from the project root:
 
-~~~bash
+~~~shell
 corepack enable
 yarn install
 cp .env.example .env
@@ -23,7 +23,7 @@ The repository includes yarn.lock; keep it in sync when changing dependencies.
 
 The normal development command starts both processes required by the application:
 
-~~~bash
+~~~shell
 yarn dev
 ~~~
 
@@ -38,7 +38,7 @@ Open [http://localhost:3000](http://localhost:3000). The frontend server opens t
 
 Useful alternatives:
 
-~~~bash
+~~~shell
 # Run only the frontend watcher and development server
 yarn dev:frontend
 
@@ -95,7 +95,7 @@ plugins/
   rollup-plugin-express-serve.mjs  Express server and proxy implementation
   proxy-path.mjs                   Proxy path rewrite helpers
   request-context.mjs              Request IDs and scoped request logger
-  expressServe.mjs                 Standalone server CLI
+  express-serve.mjs                Standalone server CLI
   express-serve-devtools.mjs       Chrome DevTools workspace middleware
   example-mocking-plugin.mjs       Inline example routes, including /log
 
@@ -145,7 +145,7 @@ The configuration route stores its data in memory. Each mock API application
 instance receives a fresh configuration state, which keeps tests isolated and
 resets the example configuration whenever the mock server restarts:
 
-~~~bash
+~~~shell
 curl http://localhost:3001/api/config
 curl -X POST http://localhost:3001/api/config \
   -H 'Content-Type: application/json' \
@@ -154,6 +154,14 @@ curl http://localhost:3001/api/status
 ~~~
 
 The mock server starts with { "theme": "light" }, so changes are lost when it restarts. The /log endpoint also logs only to the development process; it does not write an audit file or database.
+
+The `/api/status` response exposes a small allowlist of diagnostic environment
+values: standard runtime metadata such as `CI`, `LANG`, `LC_ALL`, `NODE_ENV`,
+`TERM`, and `TZ`, plus the project’s host, port, and log-level settings.
+The `OPEN_PAGE` setting is also included; URLs such as `MOCK_API_URL` are not
+returned because they could contain embedded credentials. Sensitive or noisy
+values such as `PATH`, `HOME`, credentials, and tokens are intentionally
+excluded.
 
 To add a persistent mock route, create a router in mock-server/routes/ and mount it from mock-server/api-app.mjs. To add a lightweight inline route that belongs to the frontend development server, extend plugins/example-mocking-plugin.mjs and keep it in the middleware array in express-serve.config.mjs.
 
@@ -165,7 +173,7 @@ req.log.info('User loaded', { userId: 'demo-user' });
 
 The logger accepts LOG_LEVEL values error, warn, verbose, info, and debug. For example:
 
-~~~bash
+~~~shell
 LOG_LEVEL=debug yarn dev
 ~~~
 
@@ -181,17 +189,17 @@ rollup.config.base.mjs contains the shared input, TypeScript, ESLint, Babel, Pos
 - rollup.config.prd.mjs deletes the previous dist/ contents and creates a minified build without source maps.
 - express-serve.config.mjs serves dist/ and src/, listens on port 3000, enables /about SPA fallback, enables request tracing, and registers the proxy and example middleware.
 - Proxy entries support stripPrefix for generic prefix removal and rewrite for explicit target paths such as /config to /api/config.
-- plugins/expressServe.mjs can serve an existing build without Rollup and accepts CLI overrides such as --port, --host, --folder, --open, --verbose, and --trace.
+- plugins/express-serve.mjs can serve an existing build without Rollup and accepts CLI overrides such as --port, --host, --folder, --open, --verbose, and --trace.
 
 Example standalone server commands:
 
-~~~bash
-node ./plugins/expressServe.mjs --help
-node ./plugins/expressServe.mjs --config ./express-serve.config.mjs --port 4000
-node ./plugins/expressServe.mjs --config ./express-serve.config.mjs --open=false
+~~~shell
+node ./plugins/express-serve.mjs --help
+node ./plugins/express-serve.mjs --config ./express-serve.config.mjs --port 4000
+node ./plugins/express-serve.mjs --config ./express-serve.config.mjs --open=false
 ~~~
 
-More complete option references are available in [plugins/expressServe.md](plugins/expressServe.md) and [plugins/rollup-plugin-express-serve.md](plugins/rollup-plugin-express-serve.md).
+More complete option references are available in [plugins/express-serve.md](plugins/express-serve.md) and [plugins/rollup-plugin-express-serve.md](plugins/rollup-plugin-express-serve.md).
 
 ## Adding a dependency or changing tooling
 
@@ -244,9 +252,10 @@ Available project scripts are:
 - [docs/learning-path.md](docs/learning-path.md): guided tour and practical exercises
 - [docs/decisions.md](docs/decisions.md): important architecture choices and trade-offs
 - [docs/release-checklist.md](docs/release-checklist.md): validation and publishing checklist
+- [plugins/README.md](plugins/README.md): plugin and Express server infrastructure map
 - [CHANGELOG.md](CHANGELOG.md): release and maintenance history
 - [TODO.md](TODO.md): planned fixes and enhancements
-- [plugins/expressServe.md](plugins/expressServe.md): standalone Express server CLI
+- [plugins/express-serve.md](plugins/express-serve.md): standalone Express server CLI
 - [plugins/rollup-plugin-express-serve.md](plugins/rollup-plugin-express-serve.md): Rollup plugin options and examples
 
 ## License

@@ -44,7 +44,7 @@ flowchart LR
 | `rollup.config.prd.mjs`                   | Clean, minified production build without source maps                                                |
 | `scripts/clean.mjs`                       | Removes generated artifacts, with optional dependency cleanup via `--fresh`                         |
 | `plugins/rollup-plugin-express-serve.mjs` | Reusable Express server, static files, proxying, SPA fallback, tracing, and middleware registration |
-| `plugins/expressServe.mjs`                | Standalone CLI for serving an existing build                                                        |
+| `plugins/express-serve.mjs`               | Standalone CLI for serving an existing build                                                        |
 | `plugins/proxy-path.mjs`                  | Route matching and proxy path rewriting                                                             |
 | `plugins/request-context.mjs`             | Request IDs, response headers, and request-scoped loggers                                           |
 | `plugins/express-serve-logger.mjs`        | Shared Winston/fallback logger, log levels, context metadata, and file output                       |
@@ -123,7 +123,7 @@ target path.
 
 Both servers install `requestContext()` before their other middleware. It:
 
-1. Reuses an incoming `x-request-id`, or generates a UUID.
+1. Reuses an incoming `x-request-id`, or generates a time-sortable, hyphenated ULID.
 2. Adds the ID to the response headers.
 3. Exposes the ID as `req.requestId`.
 4. Exposes `req.log`, a logger that automatically includes the request ID as
@@ -138,7 +138,7 @@ fallback logger. Console output may contain terminal colors; file output is
 JSON Lines with ANSI control sequences removed. `LOG_LEVEL` sets the default
 minimum level, for example:
 
-```bash
+```shell
 LOG_LEVEL=debug yarn dev
 ```
 

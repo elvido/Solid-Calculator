@@ -10,7 +10,7 @@ These pieces are intended to be reusable:
 
 - `rollup.config*.mjs`
 - `plugins/rollup-plugin-express-serve.mjs`
-- `plugins/expressServe.mjs`
+- `plugins/express-serve.mjs`
 - `plugins/proxy-path.mjs`
 - `plugins/request-context.mjs`
 - `plugins/express-serve-logger.*`
@@ -52,7 +52,7 @@ together.
 
 ## Minimum validation before sharing
 
-```bash
+```shell
 yarn install --immutable
 yarn check
 yarn test:preview

@@ -4,13 +4,13 @@ Serve static files, proxy APIs, and enable SPA fallback during development — a
 
 ## 🚀 Installation
 
-```bash
+```shell
 yarn add -d rollup-plugin-express-serve
 ```
 
 or
 
-```bash
+```shell
 npm install --save-dev rollup-plugin-express-serve
 ```
 

@@ -19,7 +19,7 @@ version from the template.
 
 ## Validation
 
-```bash
+```shell
 yarn install --immutable
 yarn test:unit
 yarn test:integration

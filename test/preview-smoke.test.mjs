@@ -71,7 +71,7 @@ test('production preview forwards API and rewritten config requests', async () =
 
   assert.equal(statusResponse.status, 200);
   assert.equal(statusBody.system, 'online');
-  assert.match(statusResponse.headers.get('x-request-id'), /^[0-9a-f-]{36}$/);
+  assert.match(statusResponse.headers.get('x-request-id'), /^[0-9A-HJKMNP-TV-Z]{10}-[0-9A-HJKMNP-TV-Z]{16}$/);
   assert.equal(configResponse.status, 200);
   assert.equal(configBody.theme, 'light');
 });

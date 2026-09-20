@@ -9,7 +9,7 @@ layer.
 
 From the repository root:
 
-```bash
+```shell
 corepack enable
 yarn install
 yarn dev
@@ -18,7 +18,7 @@ yarn dev
 Open `http://localhost:3000` and try the calculator, the `/about` page, and the
 theme toggle. Then run the checks in a second terminal:
 
-```bash
+```shell
 yarn format:check
 yarn lint
 yarn check:types

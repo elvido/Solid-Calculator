@@ -81,7 +81,7 @@
         "type": "node-terminal",
         "request": "launch",
         "name": "Serve Frontend",
-        "command": "node ./plugins/expressServe.mjs --config=express-serve.config.mjs --folder=dist,. --open=false",
+        "command": "node ./plugins/express-serve.mjs --config=express-serve.config.mjs --folder=dist,. --open=false",
         "cwd": "${workspaceFolder}"
       },
       {
@@ -103,7 +103,7 @@
           "--inspect=9229"
         ],
         "args": [
-          "plugins/expressServe.mjs"
+          "plugins/express-serve.mjs"
         ],
         "cwd": "${workspaceFolder}",
         "console": "integratedTerminal",

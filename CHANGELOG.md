@@ -6,7 +6,7 @@
   - Removed the hard-coded /api/config rewrite
   - Added prefix stripping, explicit rewrites, query preservation, and request ID forwarding
 - **IMPROVED**: Logging and request diagnostics
-  - Added request-scoped logger context, request IDs, variadic arguments, fallback file output, and LOG_LEVEL
+  - Added request-scoped logger context, hyphenated ULID request IDs, variadic arguments, fallback file output, and LOG_LEVEL
 - **IMPROVED**: Calculator behavior
   - Added operator precedence, keyboard input, backspace support, and a visible division-by-zero error state
 - **ADDED**: Node unit tests for proxy rewriting and scoped logger behavior
@@ -18,6 +18,7 @@
 - **IMPROVED**: Split Node tests into explicit unit and integration commands
 - **CHORE**: Removed unused `MOCK` and `MOCK_MODE` environment variables and their `cross-env` dependency
 - **FIXED**: Mock status responses now expose only allowlisted environment metadata while retaining the working directory
+- **IMPROVED**: Expanded mock status diagnostics with selected standard runtime environment variables while keeping sensitive values excluded
 - **FIXED**: Production builds no longer emit stale browser-data, Tailwind Node deprecation, or Rollup sourcemap warnings
 - **IMPROVED**: Isolated mock API configuration state per app instance and reset browser-test state before each test
 - **ADDED**: Production-preview smoke tests for built pages and proxied API routes

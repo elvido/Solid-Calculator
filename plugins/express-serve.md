@@ -1,11 +1,11 @@
-# 🧩 expressServe.mjs
+# 🧩 express-serve.mjs
 
 CLI entry point for `rollup-plugin-express-serve`, enabling standalone server startup with dynamic config resolution. It allows the reuse of your rollup-plugin-express-serve configuration serving you content as standalone server without rollup.
 
 ## 🚀 Usage
 
-```bash
-node expressServe.mjs --config ./my-config.mjs
+```shell
+node express-serve.mjs --config ./my-config.mjs
 ```
 
 If no `--config` is provided, it falls back to:
@@ -78,55 +78,55 @@ export default {
 
 ### Start with custom config
 
-```bash
-node expressServe.mjs --config ./dashboard.mjs
+```shell
+node express-serve.mjs --config ./dashboard.mjs
 ```
 
 ### Use fallback config
 
-```bash
-node expressServe.mjs
+```shell
+node express-serve.mjs
 # Will try express-serve.config.mjs/js/cjs
 ```
 
 ### Serve single folder at /
 
-```bash
-node expressServe.mjs -f public
+```shell
+node express-serve.mjs -f public
 ```
 
 ### Serve multiple folders at /
 
-```bash
-node expressServe.mjs -f public,assets
+```shell
+node express-serve.mjs -f public,assets
 ```
 
 ### Serve multiple folders with explicit mappings
 
-```bash
-node expressServe.mjs -f public/assets:/assets,public/docs:/docs,public/root:/
+```shell
+node express-serve.mjs -f public/assets:/assets,public/docs:/docs,public/root:/
 ```
 
 ### Custom port and host
 
-```bash
-node expressServe.mjs -p 4000 -h 0.0.0.0
+```shell
+node express-serve.mjs -p 4000 -h 0.0.0.0
 ```
 
 ### Open a specific page
 
-```bash
-node expressServe.mjs -o /dashboard.html
+```shell
+node express-serve.mjs -o /dashboard.html
 ```
 
 ### Disable auto-open
 
-```bash
-node expressServe.mjs -o-
+```shell
+node express-serve.mjs -o-
 ```
 
 ### Enable tracing and verbose logging
 
-```bash
-node expressServe.mjs -t -v
+```shell
+node express-serve.mjs -t -v
 ```

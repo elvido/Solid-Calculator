@@ -14,7 +14,7 @@ with a different application.
 
 Install the project dependencies and start the development processes:
 
-```bash
+```shell
 corepack enable
 yarn install
 yarn dev
@@ -26,7 +26,7 @@ reloads the browser after changes. The mock API runs on port 3001.
 
 Useful commands while learning:
 
-```bash
+```shell
 yarn dev:frontend       # frontend build, server, and live reload
 yarn dev:mock           # mock API with Nodemon restarts
 yarn format             # format the repository
@@ -175,7 +175,7 @@ app.use('/api/greeting', greetingRoute);
 The existing `/api` proxy already forwards that path to the mock server. Test
 it directly while both development processes are running:
 
-```bash
+```shell
 curl http://localhost:3001/api/greeting
 ```
 
@@ -213,7 +213,7 @@ req.log.info('Greeting requested', { requestId: req.requestId });
 The same ID travels through frontend proxy requests and the mock API. Supported
 log levels are `error`, `warn`, `verbose`, `info`, and `debug`:
 
-```bash
+```shell
 LOG_LEVEL=debug yarn dev
 ```
 
@@ -233,7 +233,7 @@ Start with the smallest test that proves the behavior:
 Unit tests can run without opening a server. Integration tests create HTTP
 servers on ephemeral ports. Browser tests install and use Chromium:
 
-```bash
+```shell
 yarn test:browser:install
 yarn test:browser
 ```
@@ -246,7 +246,7 @@ browser tests when the interaction itself is what matters.
 Use the watch build during development and a clean production build before
 sharing the application:
 
-```bash
+```shell
 yarn build:dev           # watch mode; normally run through yarn dev
 yarn build:prd           # clean, minified build in dist/
 yarn preview:serve       # serve an existing dist/

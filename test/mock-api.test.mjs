@@ -22,7 +22,7 @@ test('mock API exposes status and request IDs', async () => {
 
   assert.equal(response.status, 200);
   assert.equal(body.system, 'online');
-  assert.match(response.headers.get('x-request-id'), /^[0-9a-f-]{36}$/);
+  assert.match(response.headers.get('x-request-id'), /^[0-9A-HJKMNP-TV-Z]{10}-[0-9A-HJKMNP-TV-Z]{16}$/);
 });
 
 test('mock API preserves a supplied request ID', async () => {
@@ -62,7 +62,13 @@ test('mock API gives each app instance fresh configuration state', async () => {
 
 test('mock API only exposes allowlisted environment metadata and keeps cwd', async () => {
   const previousApiKey = process.env.API_KEY;
+  const previousCi = process.env.CI;
+  const previousLang = process.env.LANG;
+  const previousTerm = process.env.TERM;
   process.env.API_KEY = 'must-not-be-returned';
+  process.env.CI = 'true';
+  process.env.LANG = 'en_US.UTF-8';
+  process.env.TERM = 'xterm-256color';
 
   try {
     const response = await fetch(`${baseUrl}/api/status`);
@@ -70,9 +76,18 @@ test('mock API only exposes allowlisted environment metadata and keeps cwd', asy
 
     assert.equal(response.status, 200);
     assert.equal(body.environment.API_KEY, undefined);
+    assert.equal(body.environment.CI, 'true');
+    assert.equal(body.environment.LANG, 'en_US.UTF-8');
+    assert.equal(body.environment.TERM, 'xterm-256color');
     assert.equal(body.cwd, process.cwd());
   } finally {
     if (previousApiKey === undefined) delete process.env.API_KEY;
     else process.env.API_KEY = previousApiKey;
+    if (previousCi === undefined) delete process.env.CI;
+    else process.env.CI = previousCi;
+    if (previousLang === undefined) delete process.env.LANG;
+    else process.env.LANG = previousLang;
+    if (previousTerm === undefined) delete process.env.TERM;
+    else process.env.TERM = previousTerm;
   }
 });
