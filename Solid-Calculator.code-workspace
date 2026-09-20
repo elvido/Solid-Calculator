@@ -128,7 +128,7 @@
         "internalConsoleOptions": "neverOpen"
       },
       {
-        "type": "pwa-node",
+        "type": "node",
         "request": "attach",
         "name": "Attach to Mock Server",
         "port": 9229,
